@@ -1,0 +1,6 @@
+bin/ 
+obj/ 
+.vs/ 
+UploadedResumes/ 
+appsettings.Development.json 
+*.user 
