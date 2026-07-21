@@ -15,14 +15,14 @@ namespace ResumeScreener.Api.Services
             _httpClient = httpClient;
             _apiKey = configuration["GeminiSettings:ApiKey"]
                 ?? throw new InvalidOperationException("Gemini API key not configured.");
-            _model = configuration["GeminiSettings:Model"] ?? "gemini-2.5-flash";
+            _model = configuration["GeminiSettings:Model"] ?? "gemini-flash-latest";
         }
 
         public async Task<ScoringResult> ScoreResumeAsync(string resumeText, string jobDescription, string requiredSkills)
         {
             var prompt = BuildPrompt(resumeText, jobDescription, requiredSkills);
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={_apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent";
 
             var requestBody = new
             {
@@ -46,7 +46,13 @@ namespace ResumeScreener.Api.Services
             var jsonBody = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(url, content);
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = content
+            };
+            request.Headers.Add("x-goog-api-key", _apiKey);
+
+            var response = await _httpClient.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -97,7 +103,6 @@ Return ONLY valid JSON with this exact shape, no extra text, no markdown:
                 throw new Exception("Empty response from Gemini API.");
             }
 
-            // Clean up in case model wraps in markdown code fences
             text = text.Trim();
             if (text.StartsWith("```"))
             {

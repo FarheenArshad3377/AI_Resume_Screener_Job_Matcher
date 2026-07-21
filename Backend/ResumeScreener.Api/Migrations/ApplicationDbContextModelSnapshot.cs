@@ -39,6 +39,9 @@ namespace ResumeScreener.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("HiredAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("JobId")
                         .HasColumnType("int");
 
@@ -99,6 +102,187 @@ namespace ResumeScreener.Api.Migrations
                     b.ToTable("Candidates");
                 });
 
+            modelBuilder.Entity("ResumeScreener.Api.Models.CandidateNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CandidateId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CandidateId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("CandidateNotes");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.Interview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InterviewType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("InterviewerBio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InterviewerName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("MeetingLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PreparationNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecruiterNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequestedSlotsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RescheduleNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RescheduleReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.ToTable("Interviews");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.InterviewFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Concerns")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CultureFit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterviewId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InterviewerName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PrivateNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Recommendation")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("SharedWithCandidate")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Strengths")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SubmittedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TechSkills")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewId")
+                        .IsUnique();
+
+                    b.HasIndex("SubmittedByUserId");
+
+                    b.ToTable("InterviewFeedbacks");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.InterviewInterviewer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InterviewId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("InterviewInterviewers");
+                });
+
             modelBuilder.Entity("ResumeScreener.Api.Models.Job", b =>
                 {
                     b.Property<int>("Id")
@@ -107,25 +291,102 @@ namespace ResumeScreener.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ClosedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EmploymentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("PublishedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RecruiterId")
+                        .HasColumnType("int");
+
                     b.Property<string>("RequiredSkills")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Requirements")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Salary")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("RecruiterId");
+
                     b.ToTable("Jobs");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ResumeScreener.Api.Models.Application", b =>
@@ -147,9 +408,90 @@ namespace ResumeScreener.Api.Migrations
                     b.Navigation("Job");
                 });
 
+            modelBuilder.Entity("ResumeScreener.Api.Models.CandidateNote", b =>
+                {
+                    b.HasOne("ResumeScreener.Api.Models.Candidate", "Candidate")
+                        .WithMany()
+                        .HasForeignKey("CandidateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ResumeScreener.Api.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.Navigation("Candidate");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.Interview", b =>
+                {
+                    b.HasOne("ResumeScreener.Api.Models.Application", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.InterviewFeedback", b =>
+                {
+                    b.HasOne("ResumeScreener.Api.Models.Interview", "Interview")
+                        .WithOne("Feedback")
+                        .HasForeignKey("ResumeScreener.Api.Models.InterviewFeedback", "InterviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ResumeScreener.Api.Models.User", "SubmittedByUser")
+                        .WithMany()
+                        .HasForeignKey("SubmittedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Interview");
+
+                    b.Navigation("SubmittedByUser");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.InterviewInterviewer", b =>
+                {
+                    b.HasOne("ResumeScreener.Api.Models.Interview", "Interview")
+                        .WithMany("Interviewers")
+                        .HasForeignKey("InterviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ResumeScreener.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Interview");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.Job", b =>
+                {
+                    b.HasOne("ResumeScreener.Api.Models.User", "Recruiter")
+                        .WithMany()
+                        .HasForeignKey("RecruiterId");
+
+                    b.Navigation("Recruiter");
+                });
+
             modelBuilder.Entity("ResumeScreener.Api.Models.Candidate", b =>
                 {
                     b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("ResumeScreener.Api.Models.Interview", b =>
+                {
+                    b.Navigation("Feedback");
+
+                    b.Navigation("Interviewers");
                 });
 
             modelBuilder.Entity("ResumeScreener.Api.Models.Job", b =>

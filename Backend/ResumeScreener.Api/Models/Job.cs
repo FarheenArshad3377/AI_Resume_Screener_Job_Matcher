@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ResumeScreener.Api.Models
 {
@@ -18,7 +19,33 @@ namespace ResumeScreener.Api.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation property (one Job -> many Applications)
+        public int? RecruiterId { get; set; }
+
+        [ForeignKey(nameof(RecruiterId))]
+        public User? Recruiter { get; set; }
+
         public ICollection<Application> Applications { get; set; } = new List<Application>();
+
+        // 👇 NEW fields for Post Job page
+        [MaxLength(100)]
+        public string? Department { get; set; }
+
+        [MaxLength(150)]
+        public string? Location { get; set; }
+
+        [MaxLength(50)]
+        public string? EmploymentType { get; set; } // Full-time, Part-time, Contract, Internship
+
+        [MaxLength(50)]
+        public string? Salary { get; set; }
+
+        public string? Requirements { get; set; } // newline-separated list
+
+        [MaxLength(20)]
+        public string Status { get; set; } = "Draft"; // Draft, Open, Closed
+
+        public DateTime? PublishedDate { get; set; }
+        public DateTime? ClosedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

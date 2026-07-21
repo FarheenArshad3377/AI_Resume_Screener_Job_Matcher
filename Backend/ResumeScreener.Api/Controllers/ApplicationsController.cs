@@ -1,12 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeScreener.Api.Data;
+using ResumeScreener.Api.Models;
 using ResumeScreener.Api.Services;
+using System.Security.Claims;
 
 namespace ResumeScreener.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ApplicationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -18,7 +22,79 @@ namespace ResumeScreener.Api.Controllers
             _scoringService = scoringService;
         }
 
-        // POST: api/applications/5/score
+        // POST: api/applications (Auto Create & Score)
+        [HttpPost]
+        public async Task<IActionResult> CreateApplication([FromBody] Application applicationDto)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized(new { message = "Invalid token or user not authenticated." });
+            }
+
+            var candidate = await _context.Candidates.FirstOrDefaultAsync(c => c.Email == email);
+            var job = await _context.Jobs.FindAsync(applicationDto.JobId);
+
+            if (candidate == null || job == null)
+            {
+                return BadRequest(new { message = "Candidate or Job not found." });
+            }
+
+            // Duplicate check
+            var existingApp = await _context.Applications
+                .FirstOrDefaultAsync(a => a.CandidateId == candidate.Id && a.JobId == applicationDto.JobId);
+
+            if (existingApp != null)
+            {
+                return BadRequest(new { message = "You have already applied for this job." });
+            }
+
+            // 1. Initial Application Object
+            var application = new Application
+            {
+                JobId = applicationDto.JobId,
+                CandidateId = candidate.Id,
+                Status = "Processing",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Applications.Add(application);
+            await _context.SaveChangesAsync();
+
+            // 2. Automatic LLM AI Scoring Trigger
+            try
+            {
+                var result = await _scoringService.ScoreResumeAsync(
+                    candidate.ParsedText ?? "",
+                    job.Description ?? "",
+                    job.RequiredSkills ?? ""
+                );
+
+                application.MatchScore = result.Score;
+                application.MatchedSkills = string.Join(", ", result.MatchedSkills ?? new List<string>());
+                application.MissingSkills = string.Join(", ", result.MissingSkills ?? new List<string>());
+                application.AiSummary = result.Summary;
+                application.Status = "Scored";
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                application.Status = "Failed";
+                application.AiSummary = $"AI Error: {ex.Message}";
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                message = "Application submitted and scored successfully.",
+                applicationId = application.Id,
+                matchScore = application.MatchScore,
+                status = application.Status
+            });
+        }
+
+        // POST: api/applications/5/score (Manual Re-scoring)
         [HttpPost("{id}/score")]
         public async Task<IActionResult> ScoreApplication(int id)
         {
@@ -43,14 +119,14 @@ namespace ResumeScreener.Api.Controllers
             try
             {
                 var result = await _scoringService.ScoreResumeAsync(
-                    application.Candidate.ParsedText,
-                    application.Job.Description,
-                    application.Job.RequiredSkills
+                    application.Candidate.ParsedText ?? "",
+                    application.Job.Description ?? "",
+                    application.Job.RequiredSkills ?? ""
                 );
 
                 application.MatchScore = result.Score;
-                application.MatchedSkills = string.Join(", ", result.MatchedSkills);
-                application.MissingSkills = string.Join(", ", result.MissingSkills);
+                application.MatchedSkills = string.Join(", ", result.MatchedSkills ?? new List<string>());
+                application.MissingSkills = string.Join(", ", result.MissingSkills ?? new List<string>());
                 application.AiSummary = result.Summary;
                 application.Status = "Scored";
 
@@ -69,6 +145,7 @@ namespace ResumeScreener.Api.Controllers
             catch (Exception ex)
             {
                 application.Status = "Failed";
+                application.AiSummary = $"AI Error: {ex.Message}";
                 await _context.SaveChangesAsync();
 
                 return StatusCode(500, new { message = "AI scoring failed.", error = ex.Message });
@@ -92,7 +169,7 @@ namespace ResumeScreener.Api.Controllers
             return Ok(application);
         }
 
-        // GET: api/applications/by-job/5   (ranked list for a job)
+        // GET: api/applications/by-job/5 (ranked list for a job)
         [HttpGet("by-job/{jobId}")]
         public async Task<IActionResult> GetApplicationsByJob(int jobId)
         {
