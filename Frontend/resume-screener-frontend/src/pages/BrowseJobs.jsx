@@ -87,15 +87,20 @@ export default function BrowseJobs() {
     return (
         <div style={{ backgroundColor: '#f8f9fb', minHeight: '100vh' }}>
             <CandidateNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-
-            <div className="d-flex">
+        <div className="d-flex" style={{ overflowX: 'hidden' }}>
+           <div style={{ 
+                width: sidebarOpen ? '280px' : '0px', 
+                minWidth: sidebarOpen ? '280px' : '0px',
+                transition: 'all 0.3s ease',
+                overflow: 'hidden' 
+            }}>
                 <CandidateSidebar
                     isOpen={sidebarOpen}
                     filters={filters}
                     onFilterChange={handleFilterChange}
                     onClearFilters={handleClearFilters}
                 />
-
+                </div>
                 <main className="flex-grow-1 p-4">
                     <h3 className="fw-bold mb-1">Browse Jobs</h3>
                     <p className="text-muted mb-4">

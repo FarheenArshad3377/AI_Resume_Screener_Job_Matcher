@@ -16,52 +16,56 @@ namespace ResumeScreener.Api.Data
         public DbSet<CandidateNote> CandidateNotes { get; set; }
         public DbSet<Interview> Interviews { get; set; }
         public DbSet<InterviewFeedback> InterviewFeedbacks { get; set; }
-        public DbSet<InterviewInterviewer> InterviewInterviewers { get; set; }   // 👈 NEW
+        public DbSet<InterviewInterviewer> InterviewInterviewers { get; set; }
         public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // Interview -> Application (Cascade Delete)
             modelBuilder.Entity<Interview>()
                 .HasOne(i => i.Application)
                 .WithMany()
                 .HasForeignKey(i => i.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // InterviewFeedback -> Interview (One-to-One, Cascade Delete)
             modelBuilder.Entity<InterviewFeedback>()
                 .HasOne(f => f.Interview)
                 .WithOne(i => i.Feedback)
                 .HasForeignKey<InterviewFeedback>(f => f.InterviewId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 👇 NEW - Interviewer assignments
+            // InterviewInterviewer -> Interview (Many-to-One, Cascade Delete)
             modelBuilder.Entity<InterviewInterviewer>()
                 .HasOne(ii => ii.Interview)
                 .WithMany(i => i.Interviewers)
                 .HasForeignKey(ii => ii.InterviewId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // InterviewInterviewer -> User (Restrict to prevent cascade path conflict)
             modelBuilder.Entity<InterviewInterviewer>()
                 .HasOne(ii => ii.User)
                 .WithMany()
                 .HasForeignKey(ii => ii.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // 👇 NEW - Feedback submitted by
+            // InterviewFeedback -> SubmittedByUser (Restrict)
             modelBuilder.Entity<InterviewFeedback>()
                 .HasOne(f => f.SubmittedByUser)
                 .WithMany()
                 .HasForeignKey(f => f.SubmittedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Fix multiple cascade delete paths issue
+            // Application -> Job (Restrict to prevent multiple cascade paths)
             modelBuilder.Entity<Application>()
                 .HasOne(a => a.Job)
                 .WithMany(j => j.Applications)
                 .HasForeignKey(a => a.JobId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Application -> Candidate (Restrict to prevent multiple cascade paths)
             modelBuilder.Entity<Application>()
                 .HasOne(a => a.Candidate)
                 .WithMany(c => c.Applications)

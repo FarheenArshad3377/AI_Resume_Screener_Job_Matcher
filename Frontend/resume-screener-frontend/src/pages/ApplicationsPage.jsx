@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import recruiterAPI from '../api/recruiterApi';
 import RecruiterNavbar from '../components/RecruiterNavbar';
 import InterviewsSidebar from '../components/InterviewsSidebar';
+import { useSelector } from 'react-redux';
 function StatusBadge({ status }) {
     
     const map = {
@@ -121,10 +122,10 @@ export default function ApplicationsPage() {
                                                     <tr key={application.id}>
                                                         <td>
                                                             <div className="fw-semibold">
-                                                                {application.name}
+                                                                {application.name || application.candidateName || 'N/A'}
                                                             </div>
                                                             <small className="text-muted">
-                                                                {application.email}
+                                                               {application.email || application.candidateEmail || 'N/A'}
                                                             </small>
                                                         </td>
 
@@ -134,62 +135,45 @@ export default function ApplicationsPage() {
                                                                 className="text-primary text-decoration-none"
                                                                 onClick={(event) => {
                                                                     event.preventDefault();
-                                                                    navigate(
-                                                                        `/recruiter/jobs/${application.jobId}`
-                                                                    );
+                                                                    navigate(`/recruiter/jobs/${application.jobId}`);
                                                                 }}
                                                             >
-                                                                {application.jobTitle}
+                                                                {application.jobTitle || 'N/A'}
                                                             </a>
                                                         </td>
 
-                                                        <td>
-                                                            <div
-                                                                className="d-flex align-items-center gap-2"
-                                                                style={{ minWidth: '120px' }}
-                                                            >
+                                                     <td>
+                                                        <div className="d-flex align-items-center gap-2" style={{ minWidth: '120px' }}>
+                                                            <div className="progress flex-grow-1" style={{ height: '5px' }}>
                                                                 <div
-                                                                    className="progress flex-grow-1"
-                                                                    style={{ height: '5px' }}
-                                                                >
-                                                                    <div
-                                                                        className="progress-bar bg-primary"
-                                                                        style={{
-                                                                            width: `${application.matchScore}%`
-                                                                        }}
-                                                                    />
-                                                                </div>
-
-                                                                <small className="fw-semibold">
-                                                                    {application.matchScore}%
-                                                                </small>
+                                                                    className="progress-bar bg-primary"
+                                                                    style={{ width: `${application.matchScore || 0}%` }}
+                                                                />
                                                             </div>
-                                                        </td>
+                                                            <small className="fw-semibold">
+                                                                {application.matchScore || 0}%
+                                                            </small>
+                                                        </div>
+                                                    </td>
 
-                                                        <td className="text-muted small">
-                                                            {new Date(
-                                                                application.appliedDate
-                                                            ).toLocaleDateString()}
-                                                        </td>
+                                                    <td className="text-muted small">
+                                                        {application.appliedDate || application.createdAt
+                                                            ? new Date(application.appliedDate || application.createdAt).toLocaleDateString()
+                                                            : 'N/A'}
+                                                    </td>
 
-                                                        <td>
-                                                            <StatusBadge
-                                                                status={application.status}
-                                                            />
-                                                        </td>
+                                                    <td>
+                                                        <StatusBadge status={application.status} />
+                                                    </td>
 
-                                                        <td className="text-end">
-                                                            <button
-                                                                className="btn btn-primary btn-sm"
-                                                                onClick={() =>
-                                                                    navigate(
-                                                                        `/candidate/${application.candidateId}`
-                                                                    )
-                                                                }
-                                                            >
-                                                                View Profile
-                                                            </button>
-                                                        </td>
+                                                    <td className="text-end">
+                                                        <button
+                                                            className="btn btn-primary btn-sm"
+                                                            onClick={() => navigate(`/candidate/${application.candidateId}`)}
+                                                        >
+                                                            View Profile
+                                                        </button>
+                                                    </td>
                                                     </tr>
                                                 ))}
                                             </tbody>

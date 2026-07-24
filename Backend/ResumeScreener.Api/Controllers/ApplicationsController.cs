@@ -157,10 +157,26 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> GetApplication(int id)
         {
             var application = await _context.Applications
+                 .Include(a => a.Candidate)
                 .Include(a => a.Job)
-                .Include(a => a.Candidate)
-                .FirstOrDefaultAsync(a => a.Id == id);
-
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.CandidateId,
+                    a.JobId,
+                    // Aligning exact JSON property names with Frontend expectations
+                    Name = a.Candidate != null ? a.Candidate.Name : "N/A",
+                    Email = a.Candidate != null ? a.Candidate.Email : "N/A",
+                    JobTitle = a.Job != null ? a.Job.Title : "N/A",
+                    MatchScore = a.MatchScore ?? 0,
+                    a.MatchedSkills,
+                    a.MissingSkills,
+                    a.AiSummary,
+                    a.Status,
+                    AppliedDate = a.CreatedAt
+                })
+                .ToListAsync();
             if (application == null)
             {
                 return NotFound(new { message = $"Application with Id {id} not found." });

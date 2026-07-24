@@ -1,22 +1,25 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5286/api',
+  baseURL: 'http://recruitpro-api.runasp.net/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor: har request se pehle token attach karo (agar available hai)
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Request Interceptor: Attach JWT Token if available
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Interceptor: agar token expire/invalid ho (401), to login pe redirect karo
+// Response Interceptor: Handle 401 Unauthorized
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -21,7 +21,7 @@ export default function RecruiterSidebar({ isOpen }) {
     {
         icon: 'bi-people-fill',
         label: 'Applications',
-        path: '/my-applications',
+        path: '/applications',
     },
     {
         icon: 'bi-calendar-event',
