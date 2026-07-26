@@ -71,9 +71,10 @@ export const recruiterAPI = {
     );
     return response.data.data;
   },
-  getAllApplications: async () => {
+getAllApplications: async () => {
   const response = await axiosInstance.get('/recruiter/applications');
-  return response.data.data;
+  const resData = response.data.data;
+  return resData?.items ?? resData?.data ?? (Array.isArray(resData) ? resData : []);
 },
 };
 

@@ -81,7 +81,7 @@ namespace ResumeScreener.Api.Controllers
 
         // POST: api/recruiter/jobs/5/rank
         [HttpPost("jobs/{jobId}/rank")]
-        public async Task<IActionResult> RankCandidates(int jobId)
+        public async Task<IActionResult> RankCandidates(int jobId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {
             var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId);
             if (job == null)
@@ -139,10 +139,16 @@ namespace ResumeScreener.Api.Controllers
             await _context.SaveChangesAsync();
 
             // Updated candidate list return karo (CandidateRankingPage frontend expect karta hai)
-            var updatedCandidates = await _context.Applications
+            var updatedQuery = _context.Applications
                 .Include(a => a.Candidate)
                 .Where(a => a.JobId == jobId)
-                .OrderByDescending(a => a.MatchScore)
+                .OrderByDescending(a => a.MatchScore);
+
+            var totalCount = await updatedQuery.CountAsync();
+
+            var updatedCandidates = await updatedQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(a => new
                 {
                     id = a.Id,
@@ -159,7 +165,14 @@ namespace ResumeScreener.Api.Controllers
             {
                 StatusCode = 200,
                 Message = $"Ranking complete. Scored: {scoredCount}, Failed: {failedCount}.",
-                Data = updatedCandidates
+                Data = new
+                {
+                    items = updatedCandidates,
+                    pageNumber,
+                    pageSize,
+                    totalCount,
+                    totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                }
             });
         }
     }

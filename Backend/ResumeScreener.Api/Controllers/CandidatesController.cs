@@ -130,13 +130,26 @@ namespace ResumeScreener.Api.Controllers
 
         // GET: api/candidates
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Candidate>>> GetCandidates()
+        public async Task<IActionResult> GetCandidates([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {
-            var candidates = await _context.Candidates
-                .OrderByDescending(c => c.UploadedAt)
+            var query = _context.Candidates
+                .OrderByDescending(c => c.UploadedAt);
+
+            var totalCount = await query.CountAsync();
+
+            var candidates = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return Ok(candidates);
+            return Ok(new
+            {
+                data = candidates,
+                pageNumber,
+                pageSize,
+                totalCount,
+                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            });
         }
     }
 }

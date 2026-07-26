@@ -49,19 +49,33 @@ namespace ResumeScreener.Api.Controllers
         }
 
         [HttpGet("skills")]
-        public IActionResult GetSkills()
+        public IActionResult GetSkills([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {
-            var skills = new[]
+            var allSkills = new[]
             {
                 "React", "TypeScript", "JavaScript", "Node.js", "Python", "C#",
                 "ASP.NET Core", "SQL Server", "Figma", "AWS", "Docker", "PostgreSQL"
-            }.Select((name, idx) => new { id = idx + 1, name });
+            }.Select((name, idx) => new { id = idx + 1, name }).ToList();
+
+            var totalCount = allSkills.Count;
+
+            var skills = allSkills
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return Ok(new ApiResponse<object>
             {
                 StatusCode = 200,
                 Message = "Skills fetched successfully",
-                Data = skills
+                Data = new
+                {
+                    items = skills,
+                    pageNumber,
+                    pageSize,
+                    totalCount,
+                    totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                }
             });
         }
     }

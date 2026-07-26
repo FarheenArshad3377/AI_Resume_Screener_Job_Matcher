@@ -1,9 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const navItems = [
-  { label: 'Dashboard', icon: 'bi-grid', path: '/dashboard' },
+  { label: 'Dashboard', icon: 'bi-grid', path: '/my-applications' },
   { label: 'Browse Jobs', icon: 'bi-briefcase', path: '/jobs' },
-  { label: 'My Applications', icon: 'bi-file-earmark-text', path: '/my-applications' },
   { label: 'My Interviews', icon: 'bi-camera-video', path: '/my-interviews' },
   { label: 'Profile', icon: 'bi-person', path: '/profile' }
 ];

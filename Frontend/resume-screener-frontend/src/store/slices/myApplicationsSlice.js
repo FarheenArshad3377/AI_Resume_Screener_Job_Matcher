@@ -77,7 +77,7 @@ const myApplicationsSlice = createSlice({
       .addCase(fetchMyApplications.fulfilled, (s, a) => {
         s.loading = false;
         const resData = a.payload?.data ?? a.payload;
-        s.applications = resData?.items ?? (Array.isArray(resData) ? resData : []);
+        s.applications = resData?.data ?? resData?.items ?? (Array.isArray(resData) ? resData : []);
         s.totalCount = resData?.totalCount ?? a.payload?.totalCount ?? s.applications.length;
       })
       .addCase(fetchMyApplications.rejected, (s, a) => { s.loading = false; s.error = a.payload; })

@@ -121,13 +121,19 @@ namespace ResumeScreener.Api.Controllers
         }
         // GET: api/recruiter/jobs
         [HttpGet]
-        public async Task<IActionResult> GetMyJobs()
+        public async Task<IActionResult> GetMyJobs([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var recruiterId = GetRecruiterId();
 
-            var jobs = await _context.Jobs
+            var baseQuery = _context.Jobs
                 .Where(j => j.RecruiterId == recruiterId)
-                .OrderByDescending(j => j.CreatedAt)
+                .OrderByDescending(j => j.CreatedAt);
+
+            var totalCount = await baseQuery.CountAsync();
+
+            var jobs = await baseQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var jobIds = jobs.Select(j => j.Id).ToList();
@@ -170,7 +176,10 @@ namespace ResumeScreener.Api.Controllers
                 statusCode = 200,
                 message = "Jobs fetched successfully",
                 data = result,
-                totalCount = jobs.Count
+                pageNumber,
+                pageSize,
+                totalCount,
+                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
             });
         }
         // POST: api/recruiter/jobs/{jobId}/close

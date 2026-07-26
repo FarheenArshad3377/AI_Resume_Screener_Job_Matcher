@@ -116,15 +116,21 @@ namespace ResumeScreener.Api.Controllers
         }
         // GET: api/recruiter/applications
         [HttpGet("applications")]
-        public async Task<IActionResult> GetAllApplications()
+        public async Task<IActionResult> GetAllApplications([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var recruiterId = GetUserId();
 
-            var applications = await _context.Applications
+            var query = _context.Applications
                 .Include(a => a.Candidate)
                 .Include(a => a.Job)
                 .Where(a => a.Job!.RecruiterId == recruiterId)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+
+            var applications = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(a => new
                 {
                     id = a.Id,
@@ -143,7 +149,14 @@ namespace ResumeScreener.Api.Controllers
             {
                 StatusCode = 200,
                 Message = "Applications fetched successfully",
-                Data = applications
+                Data = new
+                {
+                    items = applications,
+                    page,
+                    pageSize,
+                    totalCount,
+                    totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                }
             });
         }
         // GET: api/recruiter/candidates/recent

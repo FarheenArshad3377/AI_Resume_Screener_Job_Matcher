@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ResumeScreener.Api.Data;
 using ResumeScreener.Api.DTOs;
+using ResumeScreener.Api.Services;
+using ResumeScreener.Api.Services.Exceptions;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace ResumeScreener.Api.Controllers
 {
@@ -13,11 +12,11 @@ namespace ResumeScreener.Api.Controllers
     [Authorize]
     public class CandidateInterviewsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IInterviewService _interviewService;
 
-        public CandidateInterviewsController(ApplicationDbContext context)
+        public CandidateInterviewsController(IInterviewService interviewService)
         {
-            _context = context;
+            _interviewService = interviewService;
         }
 
         private string? GetCandidateEmail()
@@ -35,40 +34,8 @@ namespace ResumeScreener.Api.Controllers
                 return Unauthorized(new { message = "Invalid or expired token." });
             }
 
-            var query = _context.Interviews
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Job)
-                        .ThenInclude(j => j!.Recruiter)
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Candidate)
-                .Where(i => i.Application!.Candidate!.Email == email);
-
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(i => i.Status == status);
-            }
-
-            var interviews = await query
-                .OrderByDescending(i => i.ScheduledDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(i => new
-                {
-                    id = i.Id,
-                    jobId = i.Application!.JobId,
-                    jobTitle = i.Application.Job!.Title,
-                    company = i.Application.Job.Recruiter != null ? i.Application.Job.Recruiter.CompanyName : null,
-                    companyLogo = (string?)null,
-                    interviewType = i.InterviewType,
-                    scheduledDate = i.ScheduledDate,
-                    interviewerName = i.InterviewerName,
-                    status = i.Status,
-                    meetingLink = i.MeetingLink,
-                    rescheduleNote = i.RescheduleNote
-                })
-                .ToListAsync();
-
-            return Ok(interviews);
+            var result = await _interviewService.GetMyInterviewsAsync(email, status, page, pageSize);
+            return Ok(result);
         }
 
         // GET: api/candidates/me/interviews/{interviewId}
@@ -77,44 +44,13 @@ namespace ResumeScreener.Api.Controllers
         {
             var email = GetCandidateEmail();
 
-            var interview = await _context.Interviews
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Job)
-                        .ThenInclude(j => j!.Recruiter)
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Candidate)
-                .FirstOrDefaultAsync(i => i.Id == interviewId);
-
-            if (interview == null)
+            try
             {
-                return NotFound(new { message = "Interview not found." });
+                var result = await _interviewService.GetInterviewDetailForCandidateAsync(email ?? "", interviewId);
+                return Ok(result);
             }
-
-            if (interview.Application!.Candidate!.Email != email)
-            {
-                return Forbid();
-            }
-
-            var job = interview.Application.Job!;
-            var descriptionSnippet = job.Description.Length > 150
-                ? job.Description.Substring(0, 150) + "..."
-                : job.Description;
-
-            return Ok(new
-            {
-                id = interview.Id,
-                jobTitle = job.Title,
-                company = job.Recruiter != null ? job.Recruiter.CompanyName : null,
-                jobDescriptionSnippet = descriptionSnippet,
-                interviewType = interview.InterviewType,
-                durationMinutes = interview.DurationMinutes,
-                scheduledDate = interview.ScheduledDate,
-                meetingLink = interview.MeetingLink,
-                interviewerName = interview.InterviewerName,
-                interviewerBio = interview.InterviewerBio,
-                preparationNotes = interview.PreparationNotes,
-                status = interview.Status
-            });
+            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ForbiddenException) { return Forbid(); }
         }
 
         // POST: api/candidates/me/interviews/{interviewId}/reschedule
@@ -123,35 +59,13 @@ namespace ResumeScreener.Api.Controllers
         {
             var email = GetCandidateEmail();
 
-            var interview = await _context.Interviews
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Candidate)
-                .FirstOrDefaultAsync(i => i.Id == interviewId);
-
-            if (interview == null)
+            try
             {
-                return NotFound(new { message = "Interview not found." });
+                var result = await _interviewService.RequestRescheduleAsync(email ?? "", interviewId, dto);
+                return Ok(result);
             }
-
-            if (interview.Application!.Candidate!.Email != email)
-            {
-                return Forbid();
-            }
-
-            interview.Status = "Pending Confirmation";
-            interview.RescheduleNote = "Reschedule requested — awaiting recruiter confirmation";
-            interview.RequestedSlotsJson = JsonSerializer.Serialize(dto.PreferredSlots);
-            interview.RescheduleReason = dto.Reason;
-            // Note: original ScheduledDate is intentionally NOT modified here
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                id = interview.Id,
-                status = interview.Status,
-                rescheduleNote = interview.RescheduleNote
-            });
+            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ForbiddenException) { return Forbid(); }
         }
 
         // POST: api/candidates/me/interviews/{interviewId}/cancel
@@ -160,25 +74,13 @@ namespace ResumeScreener.Api.Controllers
         {
             var email = GetCandidateEmail();
 
-            var interview = await _context.Interviews
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Candidate)
-                .FirstOrDefaultAsync(i => i.Id == interviewId);
-
-            if (interview == null)
+            try
             {
-                return NotFound(new { message = "Interview not found." });
+                var result = await _interviewService.CancelInterviewAsCandidateAsync(email ?? "", interviewId);
+                return Ok(result);
             }
-
-            if (interview.Application!.Candidate!.Email != email)
-            {
-                return Forbid();
-            }
-
-            interview.Status = "Cancelled";
-            await _context.SaveChangesAsync();
-
-            return Ok(new { id = interview.Id, status = interview.Status });
+            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ForbiddenException) { return Forbid(); }
         }
 
         // GET: api/candidates/me/interviews/{interviewId}/feedback
@@ -187,39 +89,13 @@ namespace ResumeScreener.Api.Controllers
         {
             var email = GetCandidateEmail();
 
-            var interview = await _context.Interviews
-                .Include(i => i.Application)
-                    .ThenInclude(a => a!.Candidate)
-                .Include(i => i.Feedback)
-                .FirstOrDefaultAsync(i => i.Id == interviewId);
-
-            if (interview == null)
+            try
             {
-                return NotFound(new { message = "Interview not found." });
+                var result = await _interviewService.GetFeedbackForCandidateAsync(email ?? "", interviewId);
+                return Ok(result);
             }
-
-            if (interview.Application!.Candidate!.Email != email)
-            {
-                return Forbid();
-            }
-
-            if (interview.Status != "Completed" || interview.Feedback == null || !interview.Feedback.SharedWithCandidate)
-            {
-                return NotFound(new { message = "Feedback not available yet." });
-            }
-
-            var fb = interview.Feedback;
-
-            return Ok(new
-            {
-                interviewerName = fb.InterviewerName,
-                role = fb.Role,
-                rating = fb.Rating,
-                notes = fb.Strengths,
-                cultureFit = fb.CultureFit,
-                techSkills = fb.TechSkills,
-                outcome = fb.Outcome
-            });
+            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ForbiddenException) { return Forbid(); }
         }
     }
 }

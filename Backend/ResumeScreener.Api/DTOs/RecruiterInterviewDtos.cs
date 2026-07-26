@@ -26,6 +26,7 @@
     public class SubmitRecruiterFeedbackDto
     {
         public double Rating { get; set; }
+
         public string? Strengths { get; set; }
         public string? Concerns { get; set; }
         public string Recommendation { get; set; } = "MoveToNextRound";

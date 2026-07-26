@@ -69,6 +69,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IResumeParserService, ResumeParserService>();
 builder.Services.AddHttpClient<ILlmScoringService, LlmScoringService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
+builder.Services.AddScoped<IInterviewService, InterviewService>();
+builder.Services.AddScoped<IJobService, JobService>();
+//builder.Services.AddScoped<ICandidateService, ICandidateService>();
 
 // Configure File Upload Limits
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
