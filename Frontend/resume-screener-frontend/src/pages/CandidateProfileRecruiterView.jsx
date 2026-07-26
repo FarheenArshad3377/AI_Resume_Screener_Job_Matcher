@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import recruiterAPI from '../api/recruiterApi';
+import recruiterAPI from '../api/recruiterAPI';
 import RecruiterNavbar from '../components/RecruiterNavbar';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 

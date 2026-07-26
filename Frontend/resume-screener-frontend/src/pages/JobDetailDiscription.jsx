@@ -10,7 +10,7 @@ import {
     clearError,
     clearSuccess
 } from '../store/slices/jobDetailSlice';
-import recruiterAPI from '../api/recruiterApi';
+import recruiterAPI from '../api/recruiterAPI';
 import RecruiterNavbar from '../components/RecruiterNavbar';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 

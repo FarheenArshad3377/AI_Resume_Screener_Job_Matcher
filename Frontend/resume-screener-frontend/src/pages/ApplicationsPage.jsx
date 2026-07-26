@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import recruiterAPI from '../api/recruiterApi';
+import recruiterAPI from '../api/recruiterAPI';
 import RecruiterNavbar from '../components/RecruiterNavbar';
 import InterviewsSidebar from '../components/InterviewsSidebar';
 import { useSelector } from 'react-redux';
