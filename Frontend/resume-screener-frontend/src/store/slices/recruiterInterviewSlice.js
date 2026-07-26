@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import recruiterInterviewAPI from '../../api/recruiterInterviewApi';
+import recruiterInterviewAPI from '../../api/recruiterInterviewApi.js';
 
 export const fetchInterviews = createAsyncThunk(
   'recruiterInterview/fetchInterviews',

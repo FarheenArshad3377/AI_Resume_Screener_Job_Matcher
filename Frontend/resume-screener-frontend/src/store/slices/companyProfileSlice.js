@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import companyProfileAPI from '../../api/companyProfileApi';
+import companyProfileAPI from '../../api/companyProfileApi.js';
 
 export const fetchCompanyProfile = createAsyncThunk(
   'companyProfile/fetchCompanyProfile',

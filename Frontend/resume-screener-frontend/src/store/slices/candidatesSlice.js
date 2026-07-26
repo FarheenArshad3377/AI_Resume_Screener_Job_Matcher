@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { uploadResume } from '../../api/candidatesApi';
-import { fetchApplicationsByJob } from '../../api/applicationsApi';
+import { uploadResume } from '../../api/candidatesApi.js';
+import { fetchApplicationsByJob } from '../../api/applicationsApi.js';
 
 export const submitResume = createAsyncThunk(
   'candidates/submitResume',
