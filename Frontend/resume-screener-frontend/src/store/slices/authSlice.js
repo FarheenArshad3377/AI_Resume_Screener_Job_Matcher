@@ -44,6 +44,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
+        const result = action.payload?.data ?? action.payload;
         state.token = action.payload.token;
        state.user = {
         fullName: action.payload.fullName,
@@ -64,6 +65,7 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
+        const result = action.payload?.data ?? action.payload;
         state.token = action.payload.token;
         state.user = {
             fullName: action.payload.fullName,

@@ -23,9 +23,7 @@ namespace ResumeScreener.Api.Models
         public string? MissingSkills { get; set; }
         public string? AiSummary { get; set; }
 
-        [MaxLength(50)]
-        public string Status { get; set; } = "Pending"; // Pending, Processing, Scored, Failed, Shortlisted, Hired, Rejected
-
+        public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? HiredAt { get; set; }   // 👈 NEW - jab status "Hired" set ho

@@ -39,7 +39,7 @@ namespace ResumeScreener.Api.Services
             {
                 JobId = jobId,
                 CandidateId = candidate.Id,
-                Status = "Processing",
+                Status = ApplicationStatus.Processing,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -58,13 +58,13 @@ namespace ResumeScreener.Api.Services
                 application.MatchedSkills = string.Join(", ", result.MatchedSkills ?? new List<string>());
                 application.MissingSkills = string.Join(", ", result.MissingSkills ?? new List<string>());
                 application.AiSummary = result.Summary;
-                application.Status = "Scored";
+                application.Status = ApplicationStatus.Scored;
 
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                application.Status = "Failed";
+                application.Status = ApplicationStatus.Failed;
                 application.AiSummary = $"AI Error: {ex.Message}";
                 await _context.SaveChangesAsync();
             }
@@ -73,7 +73,7 @@ namespace ResumeScreener.Api.Services
             {
                 ApplicationId = application.Id,
                 MatchScore = application.MatchScore,
-                Status = application.Status
+                Status = application.Status.ToString()
             };
         }
 
@@ -94,7 +94,7 @@ namespace ResumeScreener.Api.Services
                 throw new BadRequestException("Application is missing Job or Candidate data.");
             }
 
-            application.Status = "Processing";
+            application.Status = ApplicationStatus.Processing;
             await _context.SaveChangesAsync();
 
             try
@@ -109,7 +109,7 @@ namespace ResumeScreener.Api.Services
                 application.MatchedSkills = string.Join(", ", result.MatchedSkills ?? new List<string>());
                 application.MissingSkills = string.Join(", ", result.MissingSkills ?? new List<string>());
                 application.AiSummary = result.Summary;
-                application.Status = "Scored";
+                application.Status = ApplicationStatus.Scored;
 
                 await _context.SaveChangesAsync();
 
@@ -120,12 +120,12 @@ namespace ResumeScreener.Api.Services
                     MatchedSkills = result.MatchedSkills ?? new List<string>(),
                     MissingSkills = result.MissingSkills ?? new List<string>(),
                     Summary = application.AiSummary,
-                    Status = application.Status
+                    Status = application.Status.ToString()
                 };
             }
             catch (Exception ex)
             {
-                application.Status = "Failed";
+                application.Status = ApplicationStatus.Failed;
                 application.AiSummary = $"AI Error: {ex.Message}";
                 await _context.SaveChangesAsync();
 
@@ -152,7 +152,7 @@ namespace ResumeScreener.Api.Services
                     MatchedSkills = a.MatchedSkills,
                     MissingSkills = a.MissingSkills,
                     AiSummary = a.AiSummary,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     AppliedDate = a.CreatedAt
                 });
 
@@ -190,7 +190,7 @@ namespace ResumeScreener.Api.Services
                     JobId = a.JobId,
                     JobTitle = a.Job!.Title,
                     AppliedDate = a.CreatedAt,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     MatchScore = a.MatchScore ?? 0
                 })
                 .ToListAsync();
@@ -203,7 +203,36 @@ namespace ResumeScreener.Api.Services
                 TotalCount = totalCount
             };
         }
+        public async Task<ApplicationListItemDto> GetApplicationByIdAsync(int id)
+        {
+            var application = await _context.Applications
+                .Include(a => a.Candidate)
+                .Include(a => a.Job)
+                .Where(a => a.Id == id)
+                .Select(a => new ApplicationListItemDto
+                {
+                    Id = a.Id,
+                    CandidateId = a.CandidateId,
+                    JobId = a.JobId,
+                    Name = a.Candidate != null ? a.Candidate.Name : "N/A",
+                    Email = a.Candidate != null ? a.Candidate.Email : "N/A",
+                    JobTitle = a.Job != null ? a.Job.Title : "N/A",
+                    MatchScore = a.MatchScore ?? 0,
+                    MatchedSkills = a.MatchedSkills,
+                    MissingSkills = a.MissingSkills,
+                    AiSummary = a.AiSummary,
+                    Status = a.Status.ToString(),
+                    AppliedDate = a.CreatedAt
+                })
+                .FirstOrDefaultAsync();
 
+            if (application == null)
+            {
+                throw new NotFoundException($"Application with Id {id} not found.");
+            }
+
+            return application;
+        }
         public async Task<object> GetMyApplicationDetailAsync(int applicationId, string candidateEmail)
         {
             var application = await _context.Applications
@@ -221,7 +250,7 @@ namespace ResumeScreener.Api.Services
                 id = application.Id,
                 jobTitle = application.Job!.Title,
                 job = new { application.Job!.Id, application.Job.Title, application.Job.Description },
-                status = application.Status,
+                status = application.Status.ToString(),
                 matchScore = application.MatchScore,
                 matchedSkills = application.MatchedSkills,
                 missingSkills = application.MissingSkills,
@@ -251,7 +280,7 @@ namespace ResumeScreener.Api.Services
                     MatchedSkills = a.MatchedSkills,
                     MissingSkills = a.MissingSkills,
                     AiSummary = a.AiSummary,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     CreatedAt = a.CreatedAt
                 });
 

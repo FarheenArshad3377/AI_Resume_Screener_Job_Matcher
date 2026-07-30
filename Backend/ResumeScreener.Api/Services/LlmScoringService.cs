@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using ResumeScreener.Api.Models;
-
 namespace ResumeScreener.Api.Services
 {
     public class LlmScoringService : ILlmScoringService

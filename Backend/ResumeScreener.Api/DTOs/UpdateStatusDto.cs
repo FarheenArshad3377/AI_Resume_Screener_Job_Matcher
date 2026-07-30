@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using ResumeScreener.Api.Models;
 
 namespace ResumeScreener.Api.DTOs
 {
     public class UpdateStatusDto
     {
         [Required]
-        public string Status { get; set; } = string.Empty; // New, Reviewing, Shortlisted, Rejected, Hired
+        public ApplicationStatus Status { get; set; }
     }
 }

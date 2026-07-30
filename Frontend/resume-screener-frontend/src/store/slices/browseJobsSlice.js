@@ -57,22 +57,21 @@ const browseJobsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchJobs.fulfilled, (state, action) => {
+           .addCase(fetchJobs.fulfilled, (state, action) => {
                 state.loading = false;
-                const payload = action.payload;
+                const outer = action.payload?.data ?? action.payload;   // 👈 naya: pehle outer wrapper unwrap karo
 
-                // Backend jo bhi shape return kare, usay normalize kar rahe hain
-                const jobsArray = Array.isArray(payload)
-                    ? payload
-                    : Array.isArray(payload?.data)
-                        ? payload.data
-                        : Array.isArray(payload?.jobs)
-                            ? payload.jobs
-                            : [];
+                const jobsArray = Array.isArray(outer)
+                    ? outer
+                    : Array.isArray(outer?.data)
+                    ? outer.data
+                    : Array.isArray(outer?.jobs)
+                        ? outer.jobs
+                        : [];
 
                 state.jobs = jobsArray;
-                state.totalCount = payload?.totalCount ?? payload?.total ?? jobsArray.length;
-            })
+                state.totalCount = outer?.totalCount ?? outer?.total ?? jobsArray.length;
+                })
             .addCase(fetchJobs.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;

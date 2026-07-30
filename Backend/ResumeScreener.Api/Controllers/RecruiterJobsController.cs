@@ -51,6 +51,7 @@ namespace ResumeScreener.Api.Controllers
                 PublishedDate = job.PublishedDate
             };
         }
+
         // GET: api/recruiter/jobs/{jobId}/details
         [HttpGet("{jobId}/details")]
         public async Task<IActionResult> GetJobDetails(int jobId)
@@ -59,6 +60,12 @@ namespace ResumeScreener.Api.Controllers
             if (job == null)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
+            }
+
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
             }
 
             var applicantsCount = await _context.Applications.CountAsync(a => a.JobId == jobId);
@@ -94,7 +101,8 @@ namespace ResumeScreener.Api.Controllers
         [HttpGet("{jobId}/stats")]
         public async Task<IActionResult> GetJobStats(int jobId)
         {
-            var jobExists = await _context.Jobs.AnyAsync(j => j.Id == jobId);
+            // 🔒 OWNERSHIP CHECK folded into the existence check
+            var jobExists = await _context.Jobs.AnyAsync(j => j.Id == jobId && j.RecruiterId == GetRecruiterId());
             if (!jobExists)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
@@ -107,9 +115,9 @@ namespace ResumeScreener.Api.Controllers
             var data = new
             {
                 totalApplications = applications.Count,
-                newApplications = applications.Count(a => a.Status == "Pending"),
-                shortlisted = applications.Count(a => a.Status == "Shortlisted"),
-                rejected = applications.Count(a => a.Status == "Rejected")
+                newApplications = applications.Count(a => a.Status == ApplicationStatus.Pending),
+                shortlisted = applications.Count(a => a.Status == ApplicationStatus.Shortlisted),
+                rejected = applications.Count(a => a.Status == ApplicationStatus.Rejected)
             };
 
             return Ok(new ApiResponse<object>
@@ -119,6 +127,7 @@ namespace ResumeScreener.Api.Controllers
                 Data = data
             });
         }
+
         // GET: api/recruiter/jobs
         [HttpGet]
         public async Task<IActionResult> GetMyJobs([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -182,6 +191,7 @@ namespace ResumeScreener.Api.Controllers
                 totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
             });
         }
+
         // POST: api/recruiter/jobs/{jobId}/close
         [HttpPost("{jobId}/close")]
         public async Task<IActionResult> CloseJob(int jobId)
@@ -190,6 +200,12 @@ namespace ResumeScreener.Api.Controllers
             if (job == null)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
+            }
+
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
             }
 
             job.Status = "Closed";
@@ -216,6 +232,12 @@ namespace ResumeScreener.Api.Controllers
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
+            }
+
             job.Status = "Open";
             job.ClosedDate = null;
             await _context.SaveChangesAsync();
@@ -238,6 +260,12 @@ namespace ResumeScreener.Api.Controllers
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
+            }
+
             _context.Jobs.Remove(job);
             await _context.SaveChangesAsync();
 
@@ -248,6 +276,7 @@ namespace ResumeScreener.Api.Controllers
                 Data = new { job.Id, job.Title }
             });
         }
+
         // POST: api/recruiter/jobs
         [HttpPost]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobDto dto)
@@ -298,6 +327,12 @@ namespace ResumeScreener.Api.Controllers
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
+            }
+
             var applicantsCount = await _context.Applications.CountAsync(a => a.JobId == jobId);
 
             return Ok(new ApiResponse<JobDto>
@@ -316,6 +351,12 @@ namespace ResumeScreener.Api.Controllers
             if (job == null)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
+            }
+
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
             }
 
             job.Title = dto.Title;
@@ -348,6 +389,12 @@ namespace ResumeScreener.Api.Controllers
             if (job == null)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
+            }
+
+            // 🔒 OWNERSHIP CHECK
+            if (job.RecruiterId != GetRecruiterId())
+            {
+                return Forbid();
             }
 
             job.Status = "Open";

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeScreener.Api.Data;
 using ResumeScreener.Api.DTOs;
+using ResumeScreener.Api.Models;
 using ResumeScreener.Api.Services;
 using System.Security.Claims;
 
@@ -49,10 +50,9 @@ namespace ResumeScreener.Api.Controllers
                 .ToListAsync();
 
             var totalApplications = applications.Count;
-            var pendingReview = applications.Count(a => a.Status == "Pending" || a.Status == "Processing");
+            var pendingReview = applications.Count(a => a.Status == ApplicationStatus.Pending || a.Status == ApplicationStatus.Processing);
 
-            var hired = applications.Where(a => a.Status == "Hired" && a.HiredAt != null).ToList();
-
+            var hired = applications.Where(a => a.Status == ApplicationStatus.Hired && a.HiredAt != null).ToList();
             var avgTimeToHire = hired.Any()
                 ? $"{Math.Round(hired.Average(a => (a.HiredAt!.Value - a.CreatedAt).TotalDays))} days"
                 : "N/A";
@@ -95,9 +95,9 @@ namespace ResumeScreener.Api.Controllers
 
             // Sirf un applications ko score karo jo abhi tak scored nahi huin
             var applications = await _context.Applications
-                .Include(a => a.Candidate)
-                .Where(a => a.JobId == jobId && a.Status != "Scored")
-                .ToListAsync();
+        .Include(a => a.Candidate)
+        .Where(a => a.JobId == jobId && a.Status != ApplicationStatus.Scored)
+        .ToListAsync();
 
             var scoredCount = 0;
             var failedCount = 0;
@@ -106,14 +106,14 @@ namespace ResumeScreener.Api.Controllers
             {
                 if (application.Candidate == null || string.IsNullOrWhiteSpace(application.Candidate.ParsedText))
                 {
-                    application.Status = "Failed";
+                    application.Status = ApplicationStatus.Failed;
                     failedCount++;
                     continue;
                 }
 
                 try
                 {
-                    application.Status = "Processing";
+                    application.Status = ApplicationStatus.Processing;
                     await _context.SaveChangesAsync();
 
                     var result = await _scoringService.ScoreResumeAsync(
@@ -126,12 +126,12 @@ namespace ResumeScreener.Api.Controllers
                     application.MatchedSkills = string.Join(", ", result.MatchedSkills);
                     application.MissingSkills = string.Join(", ", result.MissingSkills);
                     application.AiSummary = result.Summary;
-                    application.Status = "Scored";
+                    application.Status = ApplicationStatus.Scored;
                     scoredCount++;
                 }
                 catch (Exception)
                 {
-                    application.Status = "Failed";
+                    application.Status = ApplicationStatus.Failed;
                     failedCount++;
                 }
             }

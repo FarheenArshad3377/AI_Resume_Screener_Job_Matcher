@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ResumeScreener.Api.DTOs;
 using ResumeScreener.Api.Services;
-using ResumeScreener.Api.Services.Exceptions;
 using System.Security.Claims;
 
 namespace ResumeScreener.Api.Controllers
@@ -29,21 +28,14 @@ namespace ResumeScreener.Api.Controllers
                 return Unauthorized(new ApiResponse<object> { StatusCode = 401, Message = "Invalid token." });
             }
 
-            try
-            {
-                var result = await _applicationService.CreateApplicationAsync(email, jobId);
+            var result = await _applicationService.CreateApplicationAsync(email, jobId);
 
-                return Ok(new ApiResponse<object>
-                {
-                    StatusCode = 200,
-                    Message = "Application submitted successfully.",
-                    Data = new { applicationId = result.ApplicationId, matchScore = result.MatchScore, status = result.Status }
-                });
-            }
-            catch (BadRequestException ex)
+            return Ok(new ApiResponse<object>
             {
-                return BadRequest(new ApiResponse<object> { StatusCode = 400, Message = ex.Message });
-            }
+                StatusCode = 200,
+                Message = "Application submitted successfully.",
+                Data = new { applicationId = result.ApplicationId, matchScore = result.MatchScore, status = result.Status }
+            });
         }
 
         // GET: api/candidates/me/applications
@@ -71,22 +63,14 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> GetMyApplicationDetail(int applicationId)
         {
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var detail = await _applicationService.GetMyApplicationDetailAsync(applicationId, email ?? "");
 
-            try
+            return Ok(new ApiResponse<object>
             {
-                var detail = await _applicationService.GetMyApplicationDetailAsync(applicationId, email ?? "");
-
-                return Ok(new ApiResponse<object>
-                {
-                    StatusCode = 200,
-                    Message = "Application detail fetched successfully",
-                    Data = detail
-                });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new ApiResponse<object> { StatusCode = 404, Message = ex.Message });
-            }
+                StatusCode = 200,
+                Message = "Application detail fetched successfully",
+                Data = detail
+            });
         }
     }
 }

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ResumeScreener.Api.DTOs;
 using ResumeScreener.Api.Services;
-using ResumeScreener.Api.Services.Exceptions;
 using System.Security.Claims;
 
 namespace ResumeScreener.Api.Controllers
@@ -31,11 +30,11 @@ namespace ResumeScreener.Api.Controllers
             var email = GetCandidateEmail();
             if (string.IsNullOrEmpty(email))
             {
-                return Unauthorized(new { message = "Invalid or expired token." });
+                return Unauthorized(new ApiResponse<object> { StatusCode = 401, Message = "Invalid or expired token." });
             }
 
             var result = await _interviewService.GetMyInterviewsAsync(email, status, page, pageSize);
-            return Ok(result);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Interviews fetched successfully", Data = result });
         }
 
         // GET: api/candidates/me/interviews/{interviewId}
@@ -43,14 +42,8 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> GetInterviewDetail(int interviewId)
         {
             var email = GetCandidateEmail();
-
-            try
-            {
-                var result = await _interviewService.GetInterviewDetailForCandidateAsync(email ?? "", interviewId);
-                return Ok(result);
-            }
-            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (ForbiddenException) { return Forbid(); }
+            var result = await _interviewService.GetInterviewDetailForCandidateAsync(email ?? "", interviewId);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Interview detail fetched successfully", Data = result });
         }
 
         // POST: api/candidates/me/interviews/{interviewId}/reschedule
@@ -58,14 +51,8 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> RequestReschedule(int interviewId, [FromBody] RescheduleRequestDto dto)
         {
             var email = GetCandidateEmail();
-
-            try
-            {
-                var result = await _interviewService.RequestRescheduleAsync(email ?? "", interviewId, dto);
-                return Ok(result);
-            }
-            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (ForbiddenException) { return Forbid(); }
+            var result = await _interviewService.RequestRescheduleAsync(email ?? "", interviewId, dto);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Reschedule request sent", Data = result });
         }
 
         // POST: api/candidates/me/interviews/{interviewId}/cancel
@@ -73,14 +60,8 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> CancelInterview(int interviewId)
         {
             var email = GetCandidateEmail();
-
-            try
-            {
-                var result = await _interviewService.CancelInterviewAsCandidateAsync(email ?? "", interviewId);
-                return Ok(result);
-            }
-            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (ForbiddenException) { return Forbid(); }
+            var result = await _interviewService.CancelInterviewAsCandidateAsync(email ?? "", interviewId);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Interview cancelled", Data = result });
         }
 
         // GET: api/candidates/me/interviews/{interviewId}/feedback
@@ -88,14 +69,8 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> GetFeedback(int interviewId)
         {
             var email = GetCandidateEmail();
-
-            try
-            {
-                var result = await _interviewService.GetFeedbackForCandidateAsync(email ?? "", interviewId);
-                return Ok(result);
-            }
-            catch (NotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (ForbiddenException) { return Forbid(); }
+            var result = await _interviewService.GetFeedbackForCandidateAsync(email ?? "", interviewId);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Feedback fetched successfully", Data = result });
         }
     }
 }

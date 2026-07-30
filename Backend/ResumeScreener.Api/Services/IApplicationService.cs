@@ -12,5 +12,6 @@ namespace ResumeScreener.Api.Services
         // IApplicationService.cs mein add karo:
         Task<PagedResult<ApplicationListItemDto>> GetMyApplicationsAsync(string candidateEmail, int pageNumber, int pageSize);
         Task<object> GetMyApplicationDetailAsync(int applicationId, string candidateEmail);
+        Task<ApplicationListItemDto> GetApplicationByIdAsync(int id);
     }
 }

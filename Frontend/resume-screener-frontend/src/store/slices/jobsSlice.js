@@ -30,14 +30,14 @@ const jobsSlice = createSlice({
       })
       .addCase(getJobs.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload?.data ?? action.payload;
       })
       .addCase(getJobs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })
       .addCase(getJobById.fulfilled, (state, action) => {
-        state.selectedJob = action.payload;   // 👈 NEW
+        state.selectedJob = action.payload?.data ?? action.payload;
       })
       .addCase(addJob.fulfilled, (state, action) => {
         state.items.unshift(action.payload);

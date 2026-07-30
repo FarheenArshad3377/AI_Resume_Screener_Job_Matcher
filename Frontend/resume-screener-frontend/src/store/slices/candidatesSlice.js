@@ -12,8 +12,9 @@ export const submitResume = createAsyncThunk(
 export const getCandidates = createAsyncThunk(
   'candidates/getCandidates',
   async (jobId) => {
-    const data = await fetchApplicationsByJob(jobId);
-    // Backend response ko CandidateCard ke props ke shape mein convert karo
+    const response = await fetchApplicationsByJob(jobId);
+    const data = response?.data ?? response;   // 👈 naya: wrapper unwrap
+
     return data.map((app) => ({
       id: app.id,
       name: app.candidateName,

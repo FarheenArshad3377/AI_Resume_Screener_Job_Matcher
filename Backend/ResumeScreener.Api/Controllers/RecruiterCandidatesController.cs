@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeScreener.Api.Data;
 using ResumeScreener.Api.DTOs;
+using ResumeScreener.Api.Models;
 using System.Security.Claims;
 
 namespace ResumeScreener.Api.Controllers
@@ -35,13 +36,32 @@ namespace ResumeScreener.Api.Controllers
             [FromQuery] int pageSize = 20,
             [FromQuery] int? minScore = null)
         {
+            // 🔒 OWNERSHIP CHECK
+            var job = await _context.Jobs.FindAsync(jobId);
+            if (job == null)
+            {
+                return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Job not found" });
+            }
+            if (job.RecruiterId != GetUserId())
+            {
+                return Forbid();
+            }
+
             var query = _context.Applications
                 .Include(a => a.Candidate)
                 .Where(a => a.JobId == jobId);
 
             if (status != "All")
             {
-                query = query.Where(a => a.Status == status);
+                if (!Enum.TryParse<ApplicationStatus>(status, true, out var parsedStatus))
+                {
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        StatusCode = 400,
+                        Message = $"Invalid status value: {status}"
+                    });
+                }
+                query = query.Where(a => a.Status == parsedStatus);
             }
 
             if (minScore.HasValue)
@@ -64,7 +84,7 @@ namespace ResumeScreener.Api.Controllers
                 .Select(a => new
                 {
                     id = a.Id,
-                    candidateId = a.CandidateId,   // 👈 NEW - ye add karo
+                    candidateId = a.CandidateId,
                     name = a.Candidate!.Name,
                     email = a.Candidate.Email,
                     appliedDate = a.CreatedAt,
@@ -91,6 +111,7 @@ namespace ResumeScreener.Api.Controllers
         public async Task<IActionResult> UpdateStatus(int jobId, int candidateId, [FromBody] UpdateStatusDto dto)
         {
             var application = await _context.Applications
+                .Include(a => a.Job)
                 .FirstOrDefaultAsync(a => a.JobId == jobId && a.CandidateId == candidateId);
 
             if (application == null)
@@ -98,9 +119,32 @@ namespace ResumeScreener.Api.Controllers
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Application not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK
+            if (application.Job!.RecruiterId != GetUserId())
+            {
+                return Forbid();
+            }
+
+            var allowedRecruiterStatuses = new[]
+                 {
+                    ApplicationStatus.Shortlisted,
+                    ApplicationStatus.Rejected,
+                    ApplicationStatus.Hired,
+                    ApplicationStatus.Pending
+                };
+
+            if (!allowedRecruiterStatuses.Contains(dto.Status))
+            {
+                return BadRequest(new ApiResponse<object>
+                {
+                    StatusCode = 400,
+                    Message = $"Recruiters cannot manually set status to '{dto.Status}'. Allowed: Pending, Shortlisted, Rejected, Hired."
+                });
+            }
+
             application.Status = dto.Status;
 
-            if (dto.Status == "Hired")
+            if (dto.Status == ApplicationStatus.Hired)
             {
                 application.HiredAt = DateTime.UtcNow;
             }
@@ -114,6 +158,7 @@ namespace ResumeScreener.Api.Controllers
                 Data = new { application.Id, application.Status, updatedAt = DateTime.UtcNow }
             });
         }
+
         // GET: api/recruiter/applications
         [HttpGet("applications")]
         public async Task<IActionResult> GetAllApplications([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
@@ -159,6 +204,7 @@ namespace ResumeScreener.Api.Controllers
                 }
             });
         }
+
         // GET: api/recruiter/candidates/recent
         [HttpGet("candidates/recent")]
         public async Task<IActionResult> GetRecentCandidates([FromQuery] int limit = 5)
@@ -192,19 +238,31 @@ namespace ResumeScreener.Api.Controllers
                 Data = recentCandidates
             });
         }
+
         // GET: api/recruiter/candidates/{candidateId}
         [HttpGet("candidates/{candidateId}")]
         public async Task<IActionResult> GetCandidateProfile(int candidateId)
         {
+            var recruiterId = GetUserId();
+
             var candidate = await _context.Candidates.FindAsync(candidateId);
             if (candidate == null)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Candidate not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK — recruiter can only view candidates who applied to their own jobs
+            var hasAccess = await _context.Applications
+                .AnyAsync(a => a.CandidateId == candidateId && a.Job!.RecruiterId == recruiterId);
+            if (!hasAccess)
+            {
+                return Forbid();
+            }
+
+            // 🔒 Only show applications tied to THIS recruiter's jobs, not the candidate's full history
             var applications = await _context.Applications
                 .Include(a => a.Job)
-                .Where(a => a.CandidateId == candidateId)
+                .Where(a => a.CandidateId == candidateId && a.Job!.RecruiterId == recruiterId)
                 .Select(a => new
                 {
                     id = a.Id,
@@ -213,15 +271,15 @@ namespace ResumeScreener.Api.Controllers
                     appliedDate = a.CreatedAt,
                     status = a.Status,
                     matchScore = a.MatchScore,
-                    matchedSkills = a.MatchedSkills,    // 👈 NEW
-                    missingSkills = a.MissingSkills,    // 👈 NEW
-                    aiSummary = a.AiSummary             // 👈 NEW
+                    matchedSkills = a.MatchedSkills,
+                    missingSkills = a.MissingSkills,
+                    aiSummary = a.AiSummary
                 })
                 .ToListAsync();
 
             var notes = await _context.CandidateNotes
                 .Include(n => n.CreatedByUser)
-                .Where(n => n.CandidateId == candidateId)
+                .Where(n => n.CandidateId == candidateId && n.CreatedByUserId == recruiterId)
                 .OrderByDescending(n => n.CreatedAt)
                 .Select(n => new
                 {
@@ -253,17 +311,27 @@ namespace ResumeScreener.Api.Controllers
         [HttpPost("candidates/{candidateId}/notes")]
         public async Task<IActionResult> AddNote(int candidateId, [FromBody] AddNoteDto dto)
         {
+            var recruiterId = GetUserId();
+
             var candidateExists = await _context.Candidates.AnyAsync(c => c.Id == candidateId);
             if (!candidateExists)
             {
                 return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Candidate not found" });
             }
 
+            // 🔒 OWNERSHIP CHECK — recruiter can only note candidates who applied to their own jobs
+            var hasAccess = await _context.Applications
+                .AnyAsync(a => a.CandidateId == candidateId && a.Job!.RecruiterId == recruiterId);
+            if (!hasAccess)
+            {
+                return Forbid();
+            }
+
             var note = new Models.CandidateNote
             {
                 CandidateId = candidateId,
                 Text = dto.Text,
-                CreatedByUserId = GetUserId(),
+                CreatedByUserId = recruiterId,
                 CreatedAt = DateTime.UtcNow
             };
 

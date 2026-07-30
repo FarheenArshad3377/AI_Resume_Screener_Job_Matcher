@@ -185,11 +185,11 @@ const recruiterInterviewSlice = createSlice({
       })
       .addCase(fetchInterviews.fulfilled, (state, action) => {
         state.loading = false;
-        const payload = action.payload;
+        const payload = action.payload?.data ?? action.payload;
         state.interviews = payload?.interviews ?? [];
         state.stats = payload?.stats ?? state.stats;
         state.totalCount = payload?.totalCount ?? state.interviews.length;
-      })
+       })
       .addCase(fetchInterviews.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -203,15 +203,16 @@ const recruiterInterviewSlice = createSlice({
         state.success = true;
         state.successMessage = 'Interview scheduled successfully';
         state.scheduleModalOpen = false;
-        state.interviews = [action.payload, ...state.interviews];
+        const created = action.payload?.data ?? action.payload;
+        state.interviews = [created, ...state.interviews];
       })
       .addCase(scheduleInterview.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      .addCase(fetchRescheduleRequest.fulfilled, (state, action) => {
-        state.rescheduleRequest = action.payload.data;
+     .addCase(fetchRescheduleRequest.fulfilled, (state, action) => {
+        state.rescheduleRequest = action.payload.data?.data ?? action.payload.data;
       })
 
       .addCase(confirmReschedule.pending, (state) => {
@@ -223,24 +224,24 @@ const recruiterInterviewSlice = createSlice({
         state.successMessage = 'Interview rescheduled';
         state.rescheduleTarget = null;
         state.rescheduleRequest = null;
-        const updated = action.payload;
+        const updated = action.payload?.data ?? action.payload;
         state.interviews = state.interviews.map((iv) =>
           iv.id === updated.id ? { ...iv, ...updated } : iv
-        );
-      })
+  );
+})
       .addCase(confirmReschedule.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
       .addCase(cancelInterview.fulfilled, (state, action) => {
-        const updated = action.payload;
+        const updated = action.payload?.data ?? action.payload;
         state.interviews = state.interviews.map((iv) =>
           iv.id === updated.id ? { ...iv, status: 'Cancelled' } : iv
         );
         state.success = true;
         state.successMessage = 'Interview cancelled';
-      })
+})
       .addCase(cancelInterview.rejected, (state, action) => {
         state.error = action.payload;
       })
@@ -270,7 +271,7 @@ const recruiterInterviewSlice = createSlice({
       })
       .addCase(fetchFeedback.fulfilled, (state, action) => {
         state.feedbackLoading = false;
-        state.feedbackData = action.payload;
+        state.feedbackData = action.payload?.data ?? action.payload;
       })
       .addCase(fetchFeedback.rejected, (state) => {
         state.feedbackLoading = false;
@@ -283,16 +284,19 @@ const recruiterInterviewSlice = createSlice({
       })
 
       .addCase(searchCandidates.fulfilled, (state, action) => {
-        state.candidateResults = Array.isArray(action.payload) ? action.payload : [];
+        const list = action.payload?.data ?? action.payload;
+        state.candidateResults = Array.isArray(list) ? list : [];
       })
 
       .addCase(fetchActiveJobs.fulfilled, (state, action) => {
-        state.activeJobs = Array.isArray(action.payload) ? action.payload : [];
+        const list = action.payload?.data ?? action.payload;
+        state.activeJobs = Array.isArray(list) ? list : [];
       })
 
       .addCase(fetchTeamMembers.fulfilled, (state, action) => {
-        state.teamMembers = Array.isArray(action.payload) ? action.payload : [];
-      });
+        const list = action.payload?.data ?? action.payload;
+        state.teamMembers = Array.isArray(list) ? list : [];
+      })
   }
 });
 

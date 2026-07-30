@@ -31,7 +31,7 @@ const applicationsSlice = createSlice({
       })
       .addCase(getApplicationsByJob.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload?.data ?? action.payload;
       })
       .addCase(getApplicationsByJob.rejected, (state, action) => {
         state.loading = false;

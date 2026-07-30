@@ -71,6 +71,17 @@ namespace ResumeScreener.Api.Data
                 .WithMany(c => c.Applications)
                 .HasForeignKey(a => a.CandidateId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔒 Unique constraint: ek candidate, ek job pe sirf EK dafa apply kar sakta hai
+            modelBuilder.Entity<Application>()
+                .HasIndex(a => new { a.CandidateId, a.JobId })
+                .IsUnique();
+
+            // Status ko readable string type  store in DB  , enum type use to store in c#
+            modelBuilder.Entity<Application>()
+                .Property(a => a.Status)
+                .HasConversion<string>()
+                .HasMaxLength(50);
         }
     }
 }

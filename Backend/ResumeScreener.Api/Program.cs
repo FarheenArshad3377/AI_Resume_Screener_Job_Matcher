@@ -6,6 +6,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ResumeScreener.Api.Data;
 using ResumeScreener.Api.Services;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 // Swagger / OpenAPI
@@ -67,7 +71,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register Custom Services
 builder.Services.AddScoped<IResumeParserService, ResumeParserService>();
-builder.Services.AddHttpClient<ILlmScoringService, LlmScoringService>();
+
+builder.Services.AddHttpClient<ILlmScoringService, LlmScoringService>(client =>
+{
+    // Overall safety net across ALL retry attempts combined
+    client.Timeout = TimeSpan.FromSeconds(60);
+})
+.AddPolicyHandler(GetRetryPolicy())    // outer: retries
+.AddPolicyHandler(GetTimeoutPolicy()); // inner: per-attempt timeout
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IInterviewService, InterviewService>();
@@ -80,7 +92,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
     options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10 MB
 });
 
-// Configure CORS
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -119,7 +130,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
-
+// Global error handling 
+app.UseMiddleware<ResumeScreener.Api.Middleware.GlobalExceptionMiddleware>();
 // Configure Middleware Pipeline
 app.UseSwagger();
 app.UseSwaggerUI(options =>
@@ -138,3 +150,23 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// ---- Polly Policies ----
+
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError() // 5xx aur 408 automatically handle karta hai
+        .OrResult(msg => (int)msg.StatusCode == 429) // Gemini rate limit
+        .Or<TimeoutRejectedException>() // Polly ka apna timeout bhi retry trigger kare
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)) // 2s, 4s, 8s
+        );
+}
+
+static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
+{
+    // Har individual attempt ke liye 15 second limit
+    return Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(15));
+}
