@@ -1,0 +1,329 @@
+/* ---------------------------- Candidate dashboard (dark) ----------------- */
+.rp-dash {
+  min-height: 100vh;
+  background: var(--rp-bg);
+}
+.rp-dash-navbar {
+  background: rgba(11, 14, 23, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--rp-border);
+  padding: 0.75rem 1.5rem;
+}
+.rp-dash-navbar .nav-link {
+  color: var(--rp-text-muted) !important;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.rp-dash-navbar .nav-link.active {
+  color: var(--rp-text) !important;
+}
+.rp-dash-sidebar {
+  background: var(--rp-surface);
+  border-right: 1px solid var(--rp-border);
+  color: var(--rp-text);
+}
+.rp-dash-sidebar hr { border-color: var(--rp-border); }
+.rp-dash-sidebar h6 { color: var(--rp-text); }
+.rp-dash-sidebar label,
+.rp-dash-sidebar .form-check-label { color: var(--rp-text-muted); }
+.rp-dash-sidebar .form-control,
+.rp-dash-sidebar .form-select {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text);
+}
+.rp-dash-sidebar .form-control::placeholder { color: var(--rp-text-muted); }
+.rp-dash-sidebar .input-group-text {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text-muted);
+}
+.rp-dash-sidebar .form-check-input:checked {
+  background-color: var(--rp-accent-1);
+  border-color: var(--rp-accent-1);
+}
+.rp-clear-link {
+  color: var(--rp-accent-2);
+  font-size: 0.82rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+}
+.rp-clear-link:hover { color: var(--rp-accent-1); }
+
+.rp-dash-search-card {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-md);
+  padding: 1rem 1.25rem;
+}
+.rp-dash-search-card .form-control,
+.rp-dash-search-card .form-select {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text);
+}
+.rp-dash-search-card .input-group-text {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text-muted);
+}
+
+.rp-badge-info {
+  background: rgba(34, 211, 238, 0.15);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: var(--rp-accent-cyan);
+}
+.rp-badge-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+.rp-dash-pagination .btn {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text-muted);
+}
+.rp-dash-pagination .btn:hover:not(:disabled) {
+  border-color: var(--rp-accent-1);
+  color: var(--rp-text);
+}
+.rp-jobs-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 3rem;
+    box-sizing: border-box;
+}
+
+.rp-jobs-hero-title {
+    font-weight: 800;
+    font-size: 2.4rem;
+    color: var(--rp-text);
+}
+.rp-text-gradient {
+    background: linear-gradient(90deg, var(--rp-accent-1), var(--rp-accent-cyan, #22d3ee));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.rp-jobs-filter-card {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: var(--rp-radius-md);
+    padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+}
+
+/* row ke negative margins ko neutralize karo taake card se bahar na nikle */
+.rp-jobs-filter-card .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+.rp-jobs-filter-card .row > [class*="col-"] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.rp-filter-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--rp-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.rp-jobs-filter-card .form-control,
+.rp-jobs-filter-card .form-select {
+    background: var(--rp-surface-2);
+    border: 1px solid var(--rp-border);
+    color: var(--rp-text);
+    font-size: 0.85rem;
+}
+.rp-jobs-filter-card .input-group-text {
+    background: var(--rp-surface-2);
+    border: 1px solid var(--rp-border);
+    color: var(--rp-text-muted);
+}
+.rp-jobs-filter-card .rp-btn-gradient {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* job cards ka top gap thora barhao taake filter card se chipke na */
+.rp-jobs-main .row.mb-4,
+.rp-jobs-main > .row {
+    margin-top: 0.5rem;
+}
+/* ===== FORCE OVERRIDE - debug block ===== */
+main.rp-jobs-main {
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 2.5rem 2rem 3rem !important;
+    box-sizing: border-box !important;
+    display: block !important;
+}
+
+.rp-jobs-filter-card {
+    background: #14172a !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 14px !important;
+    padding: 1.25rem 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.rp-jobs-filter-card .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.rp-apply-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 3rem;
+    box-sizing: border-box;
+}
+
+.rp-apply-card {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: var(--rp-radius-md);
+    padding: 1.75rem 2rem;
+    box-sizing: border-box;
+}
+
+.rp-apply-textarea,
+.rp-apply-input.form-control {
+    background: var(--rp-surface-2) !important;
+    border: 1px solid var(--rp-border) !important;
+    color: var(--rp-text) !important;
+}
+.rp-apply-textarea::placeholder,
+.rp-apply-input::placeholder {
+    color: var(--rp-text-muted);
+}
+.rp-apply-textarea:focus,
+.rp-apply-input:focus {
+    background: var(--rp-surface-2) !important;
+    border-color: var(--rp-accent-1) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+    color: var(--rp-text) !important;
+}
+
+.rp-file-upload {
+    background: var(--rp-surface-2);
+    border: 1px solid var(--rp-border);
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+}
+.rp-file-upload-btn {
+    background: rgba(139, 92, 246, 0.15);
+    border-right: 1px solid var(--rp-border);
+    color: var(--rp-accent-2);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+    white-space: nowrap;
+}
+.rp-file-upload-name {
+    color: var(--rp-text-muted);
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+}
+
+.rp-btn-outline {
+    background: transparent;
+    border: 1px solid var(--rp-border);
+    color: var(--rp-text-muted);
+    border-radius: 8px;
+    padding: 0.6rem 1.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.rp-btn-outline:hover {
+    border-color: var(--rp-accent-1);
+    color: var(--rp-text);
+}
+
+.rp-auth-alert-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+}
+.rp-stat-card {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: var(--rp-radius-md);
+    padding: 1.25rem;
+}
+.rp-stat-label {
+    font-size: 0.7rem;
+    color: var(--rp-text-muted);
+}
+.rp-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.rp-stat-icon-purple { background: rgba(139, 92, 246, 0.15); color: var(--rp-accent-1); }
+.rp-stat-icon-cyan { background: rgba(34, 211, 238, 0.15); color: var(--rp-accent-cyan, #22d3ee); }
+.rp-stat-icon-amber { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.rp-dark-table {
+    color: var(--rp-text);
+    --bs-table-bg: transparent;
+}
+.rp-dark-table thead tr {
+    color: var(--rp-text-muted);
+    border-bottom: 1px solid var(--rp-border);
+}
+.rp-dark-table tbody tr {
+    border-bottom: 1px solid var(--rp-border);
+}
+.rp-dark-table tbody tr:last-child {
+    border-bottom: none;
+}
+.rp-dark-table td, .rp-dark-table th {
+    background: transparent !important;
+    border-color: var(--rp-border) !important;
+}
+
+.rp-badge-info {
+    background: rgba(34, 211, 238, 0.15);
+    color: var(--rp-accent-cyan, #22d3ee);
+}
+.rp-badge-accent {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--rp-accent-2);
+}
+.rp-badge-success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+}
+.rp-badge-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+.rp-badge-muted {
+    background: var(--rp-surface-2);
+    color: var(--rp-text-muted);
+}
+
+.rp-modal-content {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.rp-modal-header {
+    background: linear-gradient(135deg, var(--rp-accent-1), var(--rp-accent-2, #a78bfa));
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}

@@ -1,97 +1,87 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchRecruiterDashboard, clearError, clearSuccess } from '../store/slices/recruiterSlice';
 import RecruiterNavbar from '../components/RecruiterNavbar';
-import RecruiterSidebar from '../components/RecruiterSidebar';
 import DashboardStats from '../components/DashboardStats';
 import JobPostingCards from '../components/JobPostingCards';
 import RecentApplications from '../components/RecentApplications';
 
 export default function RecruiterDashboard() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const dispatch = useDispatch();
-    
-    const { jobs, stats, recentCandidates, loading, error, success, successMessage } = useSelector(
-        state => state.recruiter
-    );
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        dispatch(fetchRecruiterDashboard());
-    }, [dispatch]);
+  const { jobs, stats, recentCandidates, loading, error, success, successMessage } = useSelector(
+    (state) => state.recruiter
+  );
 
-    // Auto-clear success message after 3 seconds
-    useEffect(() => {
-        if (success) {
-            const timer = setTimeout(() => {
-                dispatch(clearSuccess());
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [success, dispatch]);
+  useEffect(() => {
+    dispatch(fetchRecruiterDashboard());
+  }, [dispatch]);
 
-    return (
-        <>
-            <RecruiterNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-            <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
-                <RecruiterSidebar isOpen={sidebarOpen} />
-                <main className="flex-grow-1" style={{ backgroundColor: '#f8f9fa', overflow: 'auto' }}>
-                    <div className="p-4">
-                        {/* Error Alert */}
-                        {error && (
-                            <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                                {error}
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
-                                    onClick={() => dispatch(clearError())}
-                                ></button>
-                            </div>
-                        )}
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => dispatch(clearSuccess()), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, dispatch]);
 
-                        {/* Success Alert */}
-                        {success && successMessage && (
-                            <div className="alert alert-success alert-dismissible fade show" role="alert">
-                                {successMessage}
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
-                                    onClick={() => dispatch(clearSuccess())}
-                                ></button>
-                            </div>
-                        )}
+  return (
+    <div className="rp-landing rp-dash">
+      <div className="rp-blob rp-blob-1" />
+      <div className="rp-blob rp-blob-2" />
 
-                        {/* Loading State */}
-                        {loading ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border text-primary" role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Page Header */}
-                                <div className="mb-4">
-                                    <h1 className="mb-2">Dashboard</h1>
-                                    <p className="text-muted">Welcome back! Here's what's happening with your jobs today.</p>
-                                </div>
+      <RecruiterNavbar toggleSidebar={() => {}} />
 
-                                {/* Stats Cards */}
-                                <DashboardStats stats={stats} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <main className="p-4">
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-                                {/* Jobs and Applications Section */}
-                                <div className="row mt-4 g-4">
-                                    <div className="col-lg-8">
-                                        <JobPostingCards jobs={jobs} />
-                                    </div>
-                                    <div className="col-lg-4">
-                                        <RecentApplications candidates={recentCandidates} />
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </main>
-            </div>
-        </>
-    );
+            {error && (
+              <div className="rp-auth-alert d-flex justify-content-between align-items-center">
+                <span>{error}</span>
+                <button className="rp-btn-outline btn-sm" onClick={() => dispatch(clearError())}>Dismiss</button>
+              </div>
+            )}
+
+            {success && successMessage && (
+              <div className="rp-auth-alert-success rp-auth-alert d-flex justify-content-between align-items-center">
+                <span>{successMessage}</span>
+                <button className="rp-btn-outline btn-sm" onClick={() => dispatch(clearSuccess())}>Dismiss</button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} />
+              </div>
+            ) : (
+              <>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <h3 className="fw-bold mb-0" style={{ color: 'var(--rp-text)' }}>Dashboard</h3>
+                  <button className="rp-btn-gradient btn-sm" onClick={() => navigate('/post-job')}>
+                    <i className="bi bi-plus-lg me-1"></i>Create New Job
+                  </button>
+                </div>
+                <p className="mb-4" style={{ color: 'var(--rp-text-muted)' }}>
+                  Welcome back! Here's what's happening with your jobs today.
+                </p>
+
+                <DashboardStats stats={stats} />
+
+                <div className="row mt-4 g-4">
+                  <div className="col-lg-8">
+                    <JobPostingCards jobs={jobs} />
+                  </div>
+                  <div className="col-lg-4">
+                    <RecentApplications candidates={recentCandidates} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }

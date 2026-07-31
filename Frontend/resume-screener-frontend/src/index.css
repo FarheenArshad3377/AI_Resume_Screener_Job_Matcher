@@ -1,0 +1,515 @@
+/* ==========================================================================
+   RecruitPro — Landing page design system
+   Scoped under .rp-landing so nothing here leaks into the existing
+   Bootstrap-light dashboard/recruiter pages.
+   ========================================================================== */
+
+.rp-landing {
+  --rp-bg: #0b0e17;
+  --rp-surface: #12151f;
+  --rp-surface-2: #171b28;
+  --rp-border: rgba(255, 255, 255, 0.08);
+  --rp-text: #f8f9fc;
+  --rp-text-muted: #9aa0b4;
+  --rp-accent-1: #6c5ce7;
+  --rp-accent-2: #a855f7;
+  --rp-accent-cyan: #22d3ee;
+  --rp-gradient: linear-gradient(135deg, var(--rp-accent-1), var(--rp-accent-2));
+  --rp-radius-lg: 24px;
+  --rp-radius-md: 16px;
+  --rp-radius-pill: 999px;
+
+  background: var(--rp-bg);
+  color: var(--rp-text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.rp-landing h1,
+.rp-landing h2,
+.rp-landing h3,
+.rp-landing h4 {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.rp-landing .text-muted {
+  color: var(--rp-text-muted) !important;
+}
+
+/* ---------- Ambient background blobs (pure CSS, no libs needed) --------- */
+.rp-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+  animation: rp-drift 14s ease-in-out infinite;
+}
+.rp-blob-1 {
+  width: 480px;
+  height: 480px;
+  top: -120px;
+  left: 10%;
+  background: var(--rp-accent-1);
+}
+.rp-blob-2 {
+  width: 420px;
+  height: 420px;
+  top: 60px;
+  right: 8%;
+  background: var(--rp-accent-cyan);
+  animation-delay: -6s;
+}
+@keyframes rp-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, 25px) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rp-blob { animation: none; }
+}
+
+/* ---------------------------- Navbar ------------------------------------ */
+.rp-navbar {
+  position: relative;
+  z-index: 10;
+  background: rgba(11, 14, 23, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--rp-border);
+}
+.rp-logo {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  background: var(--rp-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.rp-nav-link {
+  color: var(--rp-text-muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  padding: 0.4rem 0;
+  position: relative;
+}
+.rp-nav-link.active,
+.rp-nav-link:hover {
+  color: var(--rp-text);
+}
+.rp-nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: var(--rp-gradient);
+  border-radius: 2px;
+}
+.rp-search {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-pill);
+  color: var(--rp-text);
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+}
+.rp-search::placeholder { color: var(--rp-text-muted); }
+.rp-search:focus {
+  outline: none;
+  border-color: var(--rp-accent-1);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+}
+.rp-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rp-text-muted);
+  border: 1px solid var(--rp-border);
+  background: var(--rp-surface);
+  transition: color 0.15s, border-color 0.15s;
+}
+.rp-icon-btn:hover {
+  color: var(--rp-text);
+  border-color: var(--rp-accent-1);
+}
+
+/* ---------------------------- Buttons ------------------------------------ */
+.rp-btn-gradient {
+  background: var(--rp-gradient);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--rp-radius-pill);
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.rp-btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(108, 92, 231, 0.5);
+  color: #fff;
+}
+.rp-btn-outline {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text);
+  font-weight: 600;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--rp-radius-pill);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.rp-btn-outline:hover {
+  border-color: var(--rp-accent-1);
+  transform: translateY(-2px);
+  color: var(--rp-text);
+}
+
+/* ---------------------------- Role toggle -------------------------------- */
+.rp-role-toggle {
+  display: inline-flex;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-pill);
+  padding: 4px;
+  position: relative;
+}
+.rp-role-btn {
+  flex: 1 1 0;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  color: var(--rp-text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.55rem 1.25rem;
+  border-radius: var(--rp-radius-pill);
+  transition: color 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+.rp-role-btn.active { color: #fff; }
+.rp-role-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: var(--rp-radius-pill);
+  background: var(--rp-gradient);
+  transition: left 0.25s ease, width 0.25s ease;
+  z-index: 0;
+}
+
+/* ---------------------------- Hero --------------------------------------- */
+.rp-hero {
+  position: relative;
+  z-index: 1;
+  padding: 6rem 1rem 4rem;
+  text-align: center;
+}
+.rp-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 1.15;
+}
+.rp-hero-gradient-text {
+  background: var(--rp-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.rp-hero p.lead {
+  color: var(--rp-text-muted);
+  font-size: 1.05rem;
+  max-width: 560px;
+  margin: 1.25rem auto 2rem;
+}
+.rp-scroll-cue {
+  color: var(--rp-text-muted);
+  animation: rp-bounce 2s infinite;
+}
+@keyframes rp-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ---------------------------- Stats strip -------------------------------- */
+.rp-stats {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--rp-border);
+  border-bottom: 1px solid var(--rp-border);
+  padding: 3rem 1rem;
+}
+.rp-stat-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+.rp-stat-label {
+  color: var(--rp-text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------- Featured jobs ------------------------------ */
+.rp-section {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 1rem;
+}
+.rp-section-eyebrow {
+  color: var(--rp-text-muted);
+  font-size: 0.95rem;
+}
+.rp-view-all {
+  color: var(--rp-accent-2);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.rp-view-all:hover { color: var(--rp-accent-1); }
+
+.rp-job-card {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-lg);
+  padding: 1.5rem;
+  height: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.rp-job-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+.rp-job-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--rp-radius-md);
+  background: var(--rp-surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--rp-accent-2);
+}
+.rp-tag {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  color: var(--rp-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--rp-radius-pill);
+  display: inline-block;
+}
+.rp-tag-accent {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+}
+.rp-tag-open {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: var(--rp-accent-cyan);
+}
+.rp-avatar-stack img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--rp-surface);
+  margin-left: -8px;
+  object-fit: cover;
+}
+.rp-avatar-stack img:first-child { margin-left: 0; }
+.rp-avatar-more {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--rp-surface-2);
+  border: 2px solid var(--rp-surface);
+  color: var(--rp-text-muted);
+  font-size: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+}
+.rp-bookmark-btn {
+  background: transparent;
+  border: none;
+  color: var(--rp-text-muted);
+}
+.rp-bookmark-btn:hover { color: var(--rp-accent-2); }
+
+/* AI match-score ring — set --score (0-100) and --ring-color inline */
+.rp-score-ring {
+  --score: 0;
+  --ring-color: #22d3ee;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-color) calc(var(--score) * 1%), rgba(255, 255, 255, 0.08) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.rp-score-ring::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--rp-surface);
+  border-radius: 50%;
+}
+.rp-score-ring span {
+  position: relative;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.rp-score-caption {
+  font-size: 0.62rem;
+  color: var(--rp-text-muted);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+/* ---------------------------- Footer -------------------------------------- */
+.rp-footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--rp-border);
+  padding: 2.5rem 1rem;
+}
+.rp-footer a {
+  color: var(--rp-text-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  margin-right: 1.5rem;
+}
+.rp-footer a:hover { color: var(--rp-text); }
+/* ---------------------------- Auth pages (Login/Signup) ------------------ */
+.rp-auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.rp-auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+.rp-auth-tagline {
+  color: var(--rp-text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+.rp-auth-card {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-lg);
+  padding: 2.25rem;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+.rp-auth-alert {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  border-radius: var(--rp-radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.rp-auth-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--rp-text);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+.rp-input-wrap {
+  position: relative;
+}
+.rp-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa0b4;
+  pointer-events: none;
+}
+.rp-auth-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid transparent;
+  border-radius: var(--rp-radius-md);
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  font-size: 0.95rem;
+  color: #111827;
+}
+.rp-auth-input:focus {
+  outline: none;
+  border-color: var(--rp-accent-1);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+}
+.rp-forgot-link {
+  font-size: 0.8rem;
+  color: var(--rp-accent-2);
+  text-decoration: none;
+}
+.rp-forgot-link:hover {
+  color: var(--rp-accent-1);
+}
+.rp-auth-divider {
+  border-top: 1px solid var(--rp-border);
+  margin: 1.5rem 0 1.25rem;
+}
+.rp-auth-footer-text {
+  color: var(--rp-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.rp-auth-footer-text a {
+  color: var(--rp-accent-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+.rp-auth-footer-text a:hover {
+  color: var(--rp-accent-1);
+}
+.rp-auth-below {
+  color: var(--rp-text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 1;
+}
+.rp-auth-below a {
+  color: var(--rp-text-muted);
+  margin: 0 0.6rem;
+}
+.rp-auth-below a:hover {
+  color: var(--rp-text);
+}

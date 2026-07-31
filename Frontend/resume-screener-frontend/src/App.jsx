@@ -17,16 +17,21 @@ import MyInterviews from './pages/MyInterviews';
 import RecruiterInterviewsPage from './pages/RecruiterInterviewsPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
+import HomePage from './pages/HomePage';
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 👇 Public landing — opens by default, no login required */}
+        <Route path="/" element={<HomePage />} />
+
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
         {/* Recruiter routes */}
         <Route
-          path="/"
+          path="/recruiter/dashboard"
           element={
             <ProtectedRoute allowedRoles={['Recruiter']}>
               <RecuriterDashboard />
@@ -42,21 +47,21 @@ function App() {
           }
         />
         <Route
-          path="/recruiter/jobs/:jobId"
+        path="/recruiter/jobs/:jobId"
+        element={
+          <ProtectedRoute allowedRoles={['Recruiter']}>
+            <JobDetailDiscription />
+          </ProtectedRoute>
+        }
+      />
+        <Route
+          path="/applications"
           element={
             <ProtectedRoute allowedRoles={['Recruiter']}>
-              <JobDetailDiscription />
+              <ApplicationsPage />
             </ProtectedRoute>
           }
         />
-        <Route
-  path="/applications"
-  element={
-    <ProtectedRoute allowedRoles={['Recruiter']}>
-      <ApplicationsPage />
-    </ProtectedRoute>
-  }
-/>
         <Route
           path="/post-job"
           element={
@@ -89,32 +94,33 @@ function App() {
             </ProtectedRoute>
           }
         />
-<Route
-  path="/recruiter/profile"
-  element={
-    <ProtectedRoute allowedRoles={['Recruiter']}>
-      <CompanyProfilePage />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute allowedRoles={['Candidate']}>
-      <CandidateProfilePage />
-    </ProtectedRoute>
-  }
-/>
-          {/* Candidate routes */}
-      <Route
-        path="/jobs"
-        element={
-          <ProtectedRoute allowedRoles={['Candidate']}>
-            <BrowseJobs />
-          </ProtectedRoute>
-        }
-      />
-      <Route
+        <Route
+          path="/recruiter/profile"
+          element={
+            <ProtectedRoute allowedRoles={['Recruiter']}>
+              <CompanyProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={['Candidate']}>
+              <CandidateProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Candidate routes */}
+        <Route
+          path="/jobs"
+          element={
+            <ProtectedRoute allowedRoles={['Candidate']}>
+              <BrowseJobs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
         path="/jobs/:jobId"
         element={
           <ProtectedRoute allowedRoles={['Candidate']}>
@@ -122,31 +128,31 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/my-applications"
-        element={
-          <ProtectedRoute allowedRoles={['Candidate']}>
-            <MyApplications />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-interviews"
-        element={
-          <ProtectedRoute allowedRoles={['Candidate']}>
-            <MyInterviews />
-          </ProtectedRoute>
-        }
-      />
-      // Recruiter routes ke andar:
-      <Route
-        path="/recruiter/interviews"
-        element={
-          <ProtectedRoute allowedRoles={['Recruiter']}>
-            <RecruiterInterviewsPage />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/my-applications"
+          element={
+            <ProtectedRoute allowedRoles={['Candidate']}>
+              <MyApplications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-interviews"
+          element={
+            <ProtectedRoute allowedRoles={['Candidate']}>
+              <MyInterviews />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruiter/interviews"
+          element={
+            <ProtectedRoute allowedRoles={['Recruiter']}>
+              <RecruiterInterviewsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Shared route */}
         <Route
           path="/jobs/:jobId/apply"

@@ -11,9 +11,9 @@ import CandidateNavbar from '../components/CandidateNavbar';
 import InterviewsSidebar from '../components/InterviewsSidebar';
 
 function getScoreVisual(score) {
-  if (score >= 70) return { color: '#198754', label: 'Excellent' };
-  if (score >= 40) return { color: '#0d6efd', label: 'High' };
-  return { color: '#dc3545', label: 'Low' };
+  if (score >= 70) return { color: '#4ade80', label: 'Excellent' };
+  if (score >= 40) return { color: '#22d3ee', label: 'High' };
+  return { color: '#f87171', label: 'Low' };
 }
 
 function ScoreRing({ score }) {
@@ -22,11 +22,11 @@ function ScoreRing({ score }) {
       <div className="text-center" style={{ width: '60px' }}>
         <div
           className="rounded-circle d-flex align-items-center justify-content-center mx-auto"
-          style={{ width: 44, height: 44, border: '3px solid #e9ecef' }}
+          style={{ width: 44, height: 44, border: '3px solid var(--rp-border)' }}
         >
-          <i className="bi bi-hourglass-split text-muted" style={{ fontSize: '0.9rem' }}></i>
+          <i className="bi bi-hourglass-split" style={{ fontSize: '0.9rem', color: 'var(--rp-text-muted)' }}></i>
         </div>
-        <div className="small text-muted" style={{ fontSize: '0.65rem' }}>Pending</div>
+        <div className="small" style={{ fontSize: '0.65rem', color: 'var(--rp-text-muted)' }}>Pending</div>
       </div>
     );
   }
@@ -39,7 +39,7 @@ function ScoreRing({ score }) {
   return (
     <div className="text-center" style={{ width: '60px' }}>
       <svg width="52" height="52" viewBox="0 0 52 52">
-        <circle cx="26" cy="26" r={radius} fill="none" stroke="#eee" strokeWidth="4" />
+        <circle cx="26" cy="26" r={radius} fill="none" stroke="var(--rp-border)" strokeWidth="4" />
         <circle
           cx="26" cy="26" r={radius} fill="none"
           stroke={color} strokeWidth="4"
@@ -52,22 +52,22 @@ function ScoreRing({ score }) {
           {score}%
         </text>
       </svg>
-      <div className="small text-muted" style={{ fontSize: '0.7rem' }}>{label}</div>
+      <div className="small" style={{ fontSize: '0.7rem', color: 'var(--rp-text-muted)' }}>{label}</div>
     </div>
   );
 }
 
 function StatusBadge({ status }) {
   const map = {
-    Reviewed: { icon: 'bi-eye', cls: 'bg-info-subtle text-info' },
-    Pending: { icon: 'bi-hourglass-split', cls: 'bg-secondary-subtle text-secondary' },
-    Interview: { icon: 'bi-calendar-check', cls: 'bg-primary-subtle text-primary' },
-    Closed: { icon: 'bi-x-circle', cls: 'bg-danger-subtle text-danger' },
-    Offered: { icon: 'bi-check-circle', cls: 'bg-success-subtle text-success' },
-    Withdrawn: { icon: 'bi-dash-circle', cls: 'bg-secondary-subtle text-secondary' },
-    Scored: { icon: 'bi-star', cls: 'bg-primary-subtle text-primary' }
+    Reviewed: { icon: 'bi-eye', cls: 'rp-badge-info' },
+    Pending: { icon: 'bi-hourglass-split', cls: 'rp-badge-muted' },
+    Interview: { icon: 'bi-calendar-check', cls: 'rp-badge-accent' },
+    Closed: { icon: 'bi-x-circle', cls: 'rp-badge-danger' },
+    Offered: { icon: 'bi-check-circle', cls: 'rp-badge-success' },
+    Withdrawn: { icon: 'bi-dash-circle', cls: 'rp-badge-muted' },
+    Scored: { icon: 'bi-star', cls: 'rp-badge-accent' }
   };
-  const conf = map[status] || { icon: 'bi-circle', cls: 'bg-secondary-subtle text-secondary' };
+  const conf = map[status] || { icon: 'bi-circle', cls: 'rp-badge-muted' };
 
   return (
     <span className={`badge rounded-pill ${conf.cls}`}>
@@ -97,80 +97,76 @@ export default function MyApplications() {
   const interviewsCount = applications.filter(a => a.status === 'Interview').length;
 
   return (
-    <>
-      <CandidateNavbar toggleSidebar={() => {}} />
-      <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
-        <InterviewsSidebar isOpen={true} user={user} />
+    <div className="rp-landing rp-dash">
+      <div className="rp-blob rp-blob-1" />
+      <div className="rp-blob rp-blob-2" />
 
-        <main className="flex-grow-1 p-4" style={{ backgroundColor: '#f8f9fa' }}>
+      <CandidateNavbar toggleSidebar={() => {}} />
+      <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)', position: 'relative', zIndex: 1 }}>
+        
+
+        <main className="flex-grow-1 p-4">
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
             <div className="d-flex justify-content-between align-items-center mb-1">
-              <h3 className="fw-bold mb-0">My Applications</h3>
-              <button className="btn btn-outline-secondary btn-sm" onClick={() => dispatch(clearError())}>
+              <h3 className="fw-bold mb-0" style={{ color: 'var(--rp-text)' }}>My Applications</h3>
+              <button className="rp-btn-outline btn-sm" onClick={() => dispatch(clearError())}>
                 Clear
               </button>
             </div>
-            <p className="text-muted mb-4">Track your progress and match status for active job roles.</p>
+            <p className="mb-4" style={{ color: 'var(--rp-text-muted)' }}>
+              Track your progress and match status for active job roles.
+            </p>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+            {error && <div className="rp-auth-alert">{error}</div>}
 
             <div className="row g-3 mb-4">
               <div className="col-md-4">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-body d-flex align-items-center gap-3">
-                    <div className="rounded-circle bg-primary-subtle d-flex align-items-center justify-content-center"
-                      style={{ width: 44, height: 44 }}>
-                      <i className="bi bi-file-earmark-text text-primary"></i>
-                    </div>
-                    <div>
-                      <small className="text-muted d-block text-uppercase" style={{ fontSize: '0.7rem' }}>Total Applied</small>
-                      <h4 className="mb-0 fw-bold">{totalCount ?? applications.length}</h4>
-                    </div>
+                <div className="rp-stat-card d-flex align-items-center gap-3">
+                  <div className="rp-stat-icon rp-stat-icon-purple">
+                    <i className="bi bi-file-earmark-text"></i>
+                  </div>
+                  <div>
+                    <small className="d-block text-uppercase rp-stat-label">Total Applied</small>
+                    <h4 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{totalCount ?? applications.length}</h4>
                   </div>
                 </div>
               </div>
               <div className="col-md-4">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-body d-flex align-items-center gap-3">
-                    <div className="rounded-circle bg-info-subtle d-flex align-items-center justify-content-center"
-                      style={{ width: 44, height: 44 }}>
-                      <i className="bi bi-eye text-info"></i>
-                    </div>
-                    <div>
-                      <small className="text-muted d-block text-uppercase" style={{ fontSize: '0.7rem' }}>Reviews</small>
-                      <h4 className="mb-0 fw-bold">{String(reviewsCount).padStart(2, '0')}</h4>
-                    </div>
+                <div className="rp-stat-card d-flex align-items-center gap-3">
+                  <div className="rp-stat-icon rp-stat-icon-cyan">
+                    <i className="bi bi-eye"></i>
+                  </div>
+                  <div>
+                    <small className="d-block text-uppercase rp-stat-label">Reviews</small>
+                    <h4 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{String(reviewsCount).padStart(2, '0')}</h4>
                   </div>
                 </div>
               </div>
               <div className="col-md-4">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-body d-flex align-items-center gap-3">
-                    <div className="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center"
-                      style={{ width: 44, height: 44 }}>
-                      <i className="bi bi-calendar-check text-warning"></i>
-                    </div>
-                    <div>
-                      <small className="text-muted d-block text-uppercase" style={{ fontSize: '0.7rem' }}>Interviews</small>
-                      <h4 className="mb-0 fw-bold">{String(interviewsCount).padStart(2, '0')}</h4>
-                    </div>
+                <div className="rp-stat-card d-flex align-items-center gap-3">
+                  <div className="rp-stat-icon rp-stat-icon-amber">
+                    <i className="bi bi-calendar-check"></i>
+                  </div>
+                  <div>
+                    <small className="d-block text-uppercase rp-stat-label">Interviews</small>
+                    <h4 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{String(interviewsCount).padStart(2, '0')}</h4>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="card border-0 shadow-sm">
-              <div className="card-body">
+            <div className="rp-apply-card p-0">
+              <div className="p-4">
                 {loading ? (
-                  <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
+                  <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} /></div>
                 ) : applications.length === 0 ? (
-                  <div className="text-center py-5 text-muted">No applications found</div>
+                  <div className="text-center py-5" style={{ color: 'var(--rp-text-muted)' }}>No applications found</div>
                 ) : (
                   <div className="table-responsive">
-                    <table className="table align-middle">
+                    <table className="table align-middle rp-dark-table">
                       <thead>
-                        <tr className="text-muted small text-uppercase">
+                        <tr className="small text-uppercase">
                           <th>Company & Role</th>
                           <th>Applied Date</th>
                           <th>Match Score</th>
@@ -183,23 +179,22 @@ export default function MyApplications() {
                           <tr key={app.id}>
                             <td>
                               <div className="d-flex align-items-center gap-2">
-                                <div className="rounded bg-light d-flex align-items-center justify-content-center"
-                                  style={{ width: 36, height: 36, flexShrink: 0 }}>
-                                  <i className="bi bi-building text-muted"></i>
+                                <div className="rp-job-icon" style={{ width: 36, height: 36, fontSize: '1rem' }}>
+                                  <i className="bi bi-building"></i>
                                 </div>
                                 <div>
-                                  <div className="fw-semibold">{app.jobTitle}</div>
-                                  {app.company && <small className="text-muted">{app.company}</small>}
+                                  <div className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{app.jobTitle}</div>
+                                  {app.company && <small style={{ color: 'var(--rp-text-muted)' }}>{app.company}</small>}
                                 </div>
                               </div>
                             </td>
-                            <td className="text-muted small">
+                            <td className="small" style={{ color: 'var(--rp-text-muted)' }}>
                               {new Date(app.appliedDate).toLocaleDateString()}
                             </td>
                             <td><ScoreRing score={app.matchScore} /></td>
                             <td><StatusBadge status={app.status} /></td>
                             <td className="text-end">
-                              <button className="btn btn-outline-secondary btn-sm" onClick={() => handleView(app.id)}>
+                              <button className="rp-btn-outline btn-sm" onClick={() => handleView(app.id)}>
                                 View Details
                               </button>
                             </td>
@@ -213,14 +208,14 @@ export default function MyApplications() {
             </div>
 
             {!loading && applications.length > 0 && (
-              <div className="d-flex justify-content-between align-items-center mt-3">
-                <div className="text-muted small">
+              <div className="rp-dash-pagination d-flex justify-content-between align-items-center mt-3">
+                <div className="small" style={{ color: 'var(--rp-text-muted)' }}>
                   Showing page {page} · {totalCount ?? applications.length} applications
                 </div>
                 <div className="btn-group">
-                  <button className="btn btn-outline-secondary btn-sm" disabled={page <= 1}
+                  <button className="btn btn-sm" disabled={page <= 1}
                     onClick={() => dispatch(setPage(page - 1))}>Prev</button>
-                  <button className="btn btn-outline-secondary btn-sm"
+                  <button className="btn btn-sm"
                     onClick={() => dispatch(setPage(page + 1))}>Next</button>
                 </div>
               </div>
@@ -230,35 +225,39 @@ export default function MyApplications() {
       </div>
 
       {currentApplication && (
-        <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={handleCloseModal}>
+        <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.7)' }} onClick={handleCloseModal}>
           <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '14px', overflow: 'hidden' }}>
-              <div className="modal-header border-0 text-white" style={{ background: 'linear-gradient(135deg, #0066cc, #4d9fff)', padding: '1.5rem' }}>
+            <div className="rp-modal-content">
+              <div className="rp-modal-header">
                 <div>
-                  <h5 className="modal-title fw-bold mb-1">{currentApplication.jobTitle}</h5>
+                  <h5 className="fw-bold mb-1" style={{ color: '#fff' }}>{currentApplication.jobTitle}</h5>
                   {currentApplication.company && (
-                    <small className="opacity-75"><i className="bi bi-building me-1"></i>{currentApplication.company}</small>
+                    <small className="opacity-75" style={{ color: '#fff' }}>
+                      <i className="bi bi-building me-1"></i>{currentApplication.company}
+                    </small>
                   )}
                 </div>
                 <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal}></button>
               </div>
-              <div className="modal-body p-4">
+              <div className="p-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <StatusBadge status={currentApplication.status} />
                   {currentApplication.matchScore != null && (
                     <div className="text-end">
-                      <div className="fw-bold text-primary" style={{ fontSize: '1.4rem' }}>{currentApplication.matchScore}%</div>
-                      <small className="text-muted">Match Score</small>
+                      <div className="fw-bold" style={{ fontSize: '1.4rem', color: 'var(--rp-accent-2)' }}>
+                        {currentApplication.matchScore}%
+                      </div>
+                      <small style={{ color: 'var(--rp-text-muted)' }}>Match Score</small>
                     </div>
                   )}
                 </div>
-                <div className="d-flex align-items-center gap-3 p-2 rounded mb-3" style={{ background: '#f8f9fb' }}>
-                  <div className="rounded-circle bg-white d-flex align-items-center justify-content-center shadow-sm" style={{ width: 36, height: 36 }}>
-                    <i className="bi bi-calendar-event text-primary"></i>
+                <div className="d-flex align-items-center gap-3 p-2 rounded mb-3" style={{ background: 'var(--rp-surface-2)' }}>
+                  <div className="rp-job-icon" style={{ width: 36, height: 36, fontSize: '1rem' }}>
+                    <i className="bi bi-calendar-event"></i>
                   </div>
                   <div>
-                    <small className="text-muted d-block">Applied On</small>
-                    <span className="fw-semibold small">
+                    <small className="d-block" style={{ color: 'var(--rp-text-muted)' }}>Applied On</small>
+                    <span className="fw-semibold small" style={{ color: 'var(--rp-text)' }}>
                       {new Date(currentApplication.appliedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
@@ -269,13 +268,13 @@ export default function MyApplications() {
                   </button>
                 )}
               </div>
-              <div className="modal-footer border-0 px-4 pb-4 pt-0">
-                <button className="btn btn-light w-100" onClick={handleCloseModal}>Close</button>
+              <div className="p-4 pt-0">
+                <button className="rp-btn-outline w-100" onClick={handleCloseModal}>Close</button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

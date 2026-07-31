@@ -7,20 +7,17 @@ import {
     clearError
 } from '../store/slices/browseJobsSlice';
 import CandidateNavbar from '../components/CandidateNavbar';
-import CandidateSidebar from '../components/CandidateSidebar';
 import JobSearchBar from '../components/JobSearchBar';
 import JobCard from '../components/JobCard';
 
 export default function BrowseJobs() {
     const dispatch = useDispatch();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('Newest First');
 
     const { jobs, loading, error, page, pageSize, totalCount, filters } =
         useSelector((s) => s.browseJobs);
 
-    // Search/sort ko redux filters ke saath sync karna (debounce ke bina, chaho to baad mein add kar lena)
     useEffect(() => {
         const timer = setTimeout(() => {
             dispatch(setFilters({ q: searchTerm, sortBy }));
@@ -70,7 +67,6 @@ export default function BrowseJobs() {
         }));
     };
 
-    // Backend job object ko JobCard ke expected shape mein map karna
     const mapJobForCard = (job) => ({
         id: job.id || job._id,
         title: job.title,
@@ -85,85 +81,73 @@ export default function BrowseJobs() {
     });
 
     return (
-        <div style={{ backgroundColor: '#f8f9fb', minHeight: '100vh' }}>
-            <CandidateNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="d-flex" style={{ overflowX: 'hidden' }}>
-           <div style={{ 
-                width: sidebarOpen ? '280px' : '0px', 
-                minWidth: sidebarOpen ? '280px' : '0px',
-                transition: 'all 0.3s ease',
-                overflow: 'hidden' 
-            }}>
-                <CandidateSidebar
-                    isOpen={sidebarOpen}
+        <div className="rp-landing rp-dash">
+            <div className="rp-blob rp-blob-1" />
+            <div className="rp-blob rp-blob-2" />
+
+            <CandidateNavbar />
+
+            <main className="rp-jobs-main" style={{ position: 'relative', zIndex: 1 }}>
+                <div className="text-center mb-4">
+                    <h1 className="rp-jobs-hero-title">
+                        Find Your Next <span className="rp-text-gradient">Impact</span>
+                    </h1>
+                    <p className="text-muted mb-0">
+                        Discover {totalCount ?? jobs.length} active opportunities matching your profile
+                    </p>
+                </div>
+
+                <JobSearchBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
                     filters={filters}
                     onFilterChange={handleFilterChange}
                     onClearFilters={handleClearFilters}
                 />
-                </div>
-                <main className="flex-grow-1 p-4">
-                    <h3 className="fw-bold mb-1">Browse Jobs</h3>
-                    <p className="text-muted mb-4">
-                        Discover {totalCount ?? jobs.length} active opportunities matching your profile
-                    </p>
 
-                    <JobSearchBar
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        sortBy={sortBy}
-                        setSortBy={setSortBy}
-                    />
+                {error && (
+                    <div className="rp-auth-alert d-flex justify-content-between align-items-center">
+                        <span>{error}</span>
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => dispatch(clearError())}>
+                            Dismiss
+                        </button>
+                    </div>
+                )}
 
-                    {error && (
-                        <div className="alert alert-danger d-flex justify-content-between align-items-center">
-                            <span>{error}</span>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => dispatch(clearError())}>
-                                Dismiss
+                {loading ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} />
+                    </div>
+                ) : jobs.length === 0 ? (
+                    <div className="text-center py-5 text-muted">No jobs found</div>
+                ) : (
+                    <div className="row">
+                        {jobs.map((job) => (
+                            <div className="col-md-6 col-lg-4 mb-4" key={job.id || job._id}>
+                                <JobCard job={mapJobForCard(job)} />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {!loading && jobs.length > 0 && (
+                    <div className="rp-dash-pagination d-flex justify-content-between align-items-center mt-3">
+                        <div className="text-muted small">
+                            Showing page {page} · {totalCount ?? jobs.length} jobs
+                        </div>
+                        <div className="btn-group">
+                            <button className="btn btn-sm" disabled={page <= 1} onClick={() => dispatch(setPage(page - 1))}>
+                                Prev
+                            </button>
+                            <button className="btn btn-sm" disabled={jobs.length < pageSize} onClick={() => dispatch(setPage(page + 1))}>
+                                Next
                             </button>
                         </div>
-                    )}
-
-                    {loading ? (
-                        <div className="text-center py-5">
-                            <div className="spinner-border text-primary" />
-                        </div>
-                    ) : jobs.length === 0 ? (
-                        <div className="text-center py-5 text-muted">No jobs found</div>
-                    ) : (
-                        <div className="row">
-                            {jobs.map((job) => (
-                                <div className="col-md-6 mb-4" key={job.id || job._id}>
-                                    <JobCard job={mapJobForCard(job)} />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {!loading && jobs.length > 0 && (
-                        <div className="d-flex justify-content-between align-items-center mt-3">
-                            <div className="text-muted small">
-                                Showing page {page} · {totalCount ?? jobs.length} jobs
-                            </div>
-                            <div className="btn-group">
-                                <button
-                                    className="btn btn-outline-secondary btn-sm"
-                                    disabled={page <= 1}
-                                    onClick={() => dispatch(setPage(page - 1))}
-                                >
-                                    Prev
-                                </button>
-                                <button
-                                    className="btn btn-outline-secondary btn-sm"
-                                    disabled={jobs.length < pageSize}
-                                    onClick={() => dispatch(setPage(page + 1))}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </main>
-            </div>
+                    </div>
+                )}
+            </main>
         </div>
     );
 }

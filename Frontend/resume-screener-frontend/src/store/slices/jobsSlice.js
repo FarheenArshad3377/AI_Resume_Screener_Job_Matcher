@@ -30,7 +30,13 @@ const jobsSlice = createSlice({
       })
       .addCase(getJobs.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload?.data ?? action.payload;
+        state.items = action.payload?.data?.data ?? [];
+        state.pagination = {
+          pageNumber: action.payload?.data?.pageNumber,
+          pageSize: action.payload?.data?.pageSize,
+          totalCount: action.payload?.data?.totalCount,
+          totalPages: action.payload?.data?.totalPages,
+        };
       })
       .addCase(getJobs.rejected, (state, action) => {
         state.loading = false;

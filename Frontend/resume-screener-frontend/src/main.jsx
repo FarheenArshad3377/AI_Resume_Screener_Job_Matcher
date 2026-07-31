@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.jsx'
 import { store } from './store/store.js';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './landing.css';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>

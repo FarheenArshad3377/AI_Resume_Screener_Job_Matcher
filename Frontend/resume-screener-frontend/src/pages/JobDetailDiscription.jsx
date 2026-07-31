@@ -12,27 +12,26 @@ import {
 } from '../store/slices/jobDetailSlice';
 import recruiterAPI from '../api/recruiterAPI';
 import RecruiterNavbar from '../components/RecruiterNavbar';
-import RecruiterSidebar from '../components/RecruiterSidebar';
 
 function StatusBadge({ status }) {
     const map = {
-        Shortlisted: 'bg-success-subtle text-success',
-        Pending: 'bg-secondary-subtle text-secondary',
-        Processing: 'bg-info-subtle text-info',
-        Scored: 'bg-primary-subtle text-primary',
-        Rejected: 'bg-danger-subtle text-danger',
-        Hired: 'bg-success text-white'
+        Shortlisted: 'rp-badge-success',
+        Pending: 'rp-badge-muted',
+        Processing: 'rp-badge-info',
+        Scored: 'rp-badge-accent',
+        Rejected: 'rp-badge-danger',
+        Hired: 'rp-badge-success'
     };
     return (
-        <span className={`badge rounded-pill ${map[status] || 'bg-secondary-subtle text-secondary'}`}>
+        <span className={`badge rounded-pill ${map[status] || 'rp-badge-muted'}`}>
             {status}
         </span>
     );
 }
 
 export default function JobDetailDiscription() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false); // 👈 NEW: independent from global loading
     const [candidates, setCandidates] = useState([]);
     const [candidatesLoading, setCandidatesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -69,7 +68,7 @@ export default function JobDetailDiscription() {
 
     useEffect(() => {
         if (success && successMessage.includes('deleted')) {
-            setTimeout(() => navigate('/jobs'), 2000);
+            setTimeout(() => navigate('/recruiter/jobs'), 2000);
         }
     }, [success, successMessage, navigate]);
 
@@ -82,12 +81,22 @@ export default function JobDetailDiscription() {
 
     const handleCloseJob = () => job?.id && dispatch(closeJob(job.id));
     const handleReopenJob = () => job?.id && dispatch(reopenJob(job.id));
-    const handleDeleteJob = () => {
-        if (job?.id) {
-            dispatch(deleteJob(job.id));
-            setShowDeleteModal(false);
-        }
-    };
+
+    // 👇 UPDATED: uses its own deleteLoading state instead of the global `loading`
+   const handleDeleteJob = async () => {
+    console.log('🔥🔥🔥 NEW CODE IS RUNNING 🔥🔥🔥');
+    if (!job?.id) return;
+    setDeleteLoading(true);
+    try {
+        await dispatch(deleteJob(job.id)).unwrap();
+        setShowDeleteModal(false);
+    } catch (err) {
+        console.error('Delete failed:', err);
+    } finally {
+        setDeleteLoading(false);
+    }
+};
+
     const handleEditJob = () => navigate(`/jobs/${jobId}/edit`);
 
     const avgMatchScore = useMemo(() => {
@@ -125,51 +134,54 @@ export default function JobDetailDiscription() {
 
     if (loading && !job) {
         return (
-            <>
-                <RecruiterNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-                <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
-                    <RecruiterSidebar isOpen={sidebarOpen} />
-                    <main className="flex-grow-1 d-flex align-items-center justify-content-center">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                    </main>
+            <div className="rp-landing rp-dash">
+                <div className="rp-blob rp-blob-1" />
+                <div className="rp-blob rp-blob-2" />
+                <RecruiterNavbar toggleSidebar={() => {}} />
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: 'calc(100vh - 60px)', position: 'relative', zIndex: 1 }}>
+                    <div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
                 </div>
-            </>
+            </div>
         );
     }
 
     if (!job) {
         return (
-            <>
-                <RecruiterNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-                <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
-                    <RecruiterSidebar isOpen={sidebarOpen} />
-                    <main className="flex-grow-1 p-4">
-                        <div className="alert alert-info">Job not found</div>
+            <div className="rp-landing rp-dash">
+                <div className="rp-blob rp-blob-1" />
+                <div className="rp-blob rp-blob-2" />
+                <RecruiterNavbar toggleSidebar={() => {}} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <main className="p-4">
+                        <div className="rp-auth-alert">Job not found</div>
                     </main>
                 </div>
-            </>
+            </div>
         );
     }
 
     return (
-        <>
-            <RecruiterNavbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-            <div className="d-flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
-                <RecruiterSidebar isOpen={sidebarOpen} />
-                <main className="flex-grow-1" style={{ backgroundColor: '#f8f9fa', overflow: 'auto' }}>
-                    <div className="p-4" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="rp-landing rp-dash">
+            <div className="rp-blob rp-blob-1" />
+            <div className="rp-blob rp-blob-2" />
+
+            <RecruiterNavbar toggleSidebar={() => {}} />
+
+            <div style={{ position: 'relative', zIndex: 1 }}>
+                <main className="p-4">
+                    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                         {error && (
-                            <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                                {error}
-                                <button type="button" className="btn-close" onClick={() => dispatch(clearError())}></button>
+                            <div className="rp-auth-alert d-flex justify-content-between align-items-center">
+                                <span>{error}</span>
+                                <button className="rp-btn-outline btn-sm" onClick={() => dispatch(clearError())}>Dismiss</button>
                             </div>
                         )}
                         {success && successMessage && (
-                            <div className="alert alert-success alert-dismissible fade show" role="alert">
-                                {successMessage}
-                                <button type="button" className="btn-close" onClick={() => dispatch(clearSuccess())}></button>
+                            <div className="rp-auth-alert-success rp-auth-alert d-flex justify-content-between align-items-center">
+                                <span>{successMessage}</span>
+                                <button className="rp-btn-outline btn-sm" onClick={() => dispatch(clearSuccess())}>Dismiss</button>
                             </div>
                         )}
 
@@ -177,45 +189,49 @@ export default function JobDetailDiscription() {
                         <nav aria-label="breadcrumb" className="mb-3">
                             <ol className="breadcrumb mb-0">
                                 <li className="breadcrumb-item">
-                                    <a href="#" className="text-primary" onClick={(e) => { e.preventDefault(); navigate('/jobs'); }}>
+                                    <a
+                                        href="#"
+                                        style={{ color: 'var(--rp-accent-2)', textDecoration: 'none' }}
+                                        onClick={(e) => { e.preventDefault(); navigate('/recruiter/jobs'); }}
+                                    >
                                         Jobs
                                     </a>
                                 </li>
-                                <li className="breadcrumb-item active">{job.title}</li>
+                                <li className="breadcrumb-item active" style={{ color: 'var(--rp-text-muted)' }}>{job.title}</li>
                             </ol>
                         </nav>
 
                         {/* Header */}
-                        <div className="card border-0 shadow-sm mb-4">
-                            <div className="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+                        <div className="rp-apply-card mb-4">
+                            <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
                                 <div>
-                                    <h2 className="mb-2">{job.title}</h2>
-                                    <div className="d-flex flex-wrap gap-3 text-muted small">
+                                    <h3 className="fw-bold mb-2" style={{ color: 'var(--rp-text)' }}>{job.title}</h3>
+                                    <div className="d-flex flex-wrap gap-3 small" style={{ color: 'var(--rp-text-muted)' }}>
                                         <span><i className="bi bi-building me-1"></i>{job.department}</span>
                                         <span><i className="bi bi-geo-alt me-1"></i>{job.location}</span>
                                         <span><i className="bi bi-briefcase me-1"></i>{job.employmentType}</span>
                                     </div>
                                 </div>
                                 <div className="d-flex align-items-center gap-2">
-                                    <span className={`badge ${
-                                        job.status === 'Open' ? 'bg-success' :
-                                        job.status === 'Closed' ? 'bg-danger' : 'bg-warning'
+                                    <span className={`badge rounded-pill ${
+                                        job.status === 'Open' ? 'rp-badge-success' :
+                                        job.status === 'Closed' ? 'rp-badge-danger' : 'rp-badge-muted'
                                     }`}>
                                         {job.status}
                                     </span>
-                                    <button className="btn btn-outline-primary btn-sm" onClick={handleEditJob}>
+                                    <button className="rp-btn-outline btn-sm" onClick={handleEditJob}>
                                         <i className="bi bi-pencil me-1"></i>Edit Job
                                     </button>
                                     {job.status === 'Open' ? (
-                                        <button className="btn btn-outline-danger btn-sm" onClick={handleCloseJob} disabled={loading}>
+                                        <button className="rp-btn-outline btn-sm" style={{ color: '#f87171' }} onClick={handleCloseJob} disabled={loading}>
                                             Close Job
                                         </button>
                                     ) : (
-                                        <button className="btn btn-outline-success btn-sm" onClick={handleReopenJob} disabled={loading}>
+                                        <button className="rp-btn-outline btn-sm" style={{ color: '#4ade80' }} onClick={handleReopenJob} disabled={loading}>
                                             Reopen Job
                                         </button>
                                     )}
-                                    <button className="btn btn-outline-danger btn-sm" onClick={() => setShowDeleteModal(true)} disabled={loading}>
+                                    <button className="rp-btn-outline btn-sm" style={{ color: '#f87171' }} onClick={() => setShowDeleteModal(true)} disabled={loading}>
                                         <i className="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -225,38 +241,30 @@ export default function JobDetailDiscription() {
                         {/* Stats */}
                         <div className="row g-3 mb-4">
                             <div className="col-md-3">
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <small className="text-muted d-block mb-1">Total Applicants</small>
-                                        <h3 className="text-primary mb-0">{stats.totalApplications}</h3>
+                                <div className="rp-stat-card">
+                                    <small className="d-block mb-1 rp-stat-label">Total Applicants</small>
+                                    <h3 className="mb-0 fw-bold" style={{ color: 'var(--rp-accent-1)' }}>{stats.totalApplications}</h3>
+                                </div>
+                            </div>
+                            <div className="col-md-3">
+                                <div className="rp-stat-card">
+                                    <small className="d-block mb-1 rp-stat-label">Avg. Match Score</small>
+                                    <h3 className="mb-1 fw-bold" style={{ color: 'var(--rp-text)' }}>{avgMatchScore}%</h3>
+                                    <div className="progress" style={{ height: '4px', background: 'var(--rp-surface-2)' }}>
+                                        <div className="progress-bar" style={{ width: `${avgMatchScore}%`, background: 'var(--rp-accent-1)' }}></div>
                                     </div>
                                 </div>
                             </div>
                             <div className="col-md-3">
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <small className="text-muted d-block mb-1">Avg. Match Score</small>
-                                        <h3 className="mb-1">{avgMatchScore}%</h3>
-                                        <div className="progress" style={{ height: '4px' }}>
-                                            <div className="progress-bar bg-primary" style={{ width: `${avgMatchScore}%` }}></div>
-                                        </div>
-                                    </div>
+                                <div className="rp-stat-card">
+                                    <small className="d-block mb-1 rp-stat-label">Shortlisted</small>
+                                    <h3 className="mb-0 fw-bold" style={{ color: '#4ade80' }}>{stats.shortlisted}</h3>
                                 </div>
                             </div>
                             <div className="col-md-3">
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <small className="text-muted d-block mb-1">Shortlisted</small>
-                                        <h3 className="text-success mb-0">{stats.shortlisted}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-md-3">
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <small className="text-muted d-block mb-1">Days Open</small>
-                                        <h3 className="mb-0">{daysOpen}</h3>
-                                    </div>
+                                <div className="rp-stat-card">
+                                    <small className="d-block mb-1 rp-stat-label">Days Open</small>
+                                    <h3 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{daysOpen}</h3>
                                 </div>
                             </div>
                         </div>
@@ -264,184 +272,183 @@ export default function JobDetailDiscription() {
                         {/* Job Description + Details + Requirements + Skills */}
                         <div className="row g-4 mb-4">
                             <div className="col-lg-8">
-                                <div className="card border-0 shadow-sm mb-4">
-                                    <div className="card-body">
-                                        <h5 className="card-title mb-3">Job Description</h5>
-                                        <p className="text-muted" style={{ lineHeight: '1.6' }}>{job.description}</p>
-                                    </div>
+                                <div className="rp-apply-card mb-4">
+                                    <h5 className="fw-bold mb-3" style={{ color: 'var(--rp-text)' }}>Job Description</h5>
+                                    <p style={{ lineHeight: '1.6', color: 'var(--rp-text-muted)' }}>{job.description}</p>
                                 </div>
 
-                                <div className="card border-0 shadow-sm mb-4">
-                                    <div className="card-body">
-                                        <h5 className="card-title mb-3">Requirements</h5>
-                                        <ul className="list-group list-group-flush">
-                                            {job.requirements && job.requirements.map((req, idx) => (
-                                                <li key={idx} className="list-group-item px-0 py-2">
-                                                    <i className="bi bi-check-circle text-success me-2"></i>{req}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
+                                <div className="rp-apply-card mb-4">
+                                    <h5 className="fw-bold mb-3" style={{ color: 'var(--rp-text)' }}>Requirements</h5>
+                                    <ul className="list-unstyled mb-0">
+                                        {job.requirements && job.requirements.map((req, idx) => (
+                                            <li key={idx} className="py-2" style={{ borderBottom: idx !== job.requirements.length - 1 ? '1px solid var(--rp-border)' : 'none', color: 'var(--rp-text)' }}>
+                                                <i className="bi bi-check-circle me-2" style={{ color: '#4ade80' }}></i>{req}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
 
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <h5 className="card-title mb-3">Required Skills</h5>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {job.skills && job.skills.map((skill, idx) => (
-                                                <span key={idx} className="badge bg-primary">{skill}</span>
-                                            ))}
-                                        </div>
+                                <div className="rp-apply-card">
+                                    <h5 className="fw-bold mb-3" style={{ color: 'var(--rp-text)' }}>Required Skills</h5>
+                                    <div className="d-flex flex-wrap gap-2">
+                                        {job.skills && job.skills.map((skill, idx) => (
+                                            <span key={idx} className="badge rounded-pill rp-badge-accent">{skill}</span>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="col-lg-4">
-                                <div className="card border-0 shadow-sm">
-                                    <div className="card-body">
-                                        <h5 className="card-title mb-3">Job Details</h5>
-                                        <p className="text-muted small mb-1">Department</p>
-                                        <p className="fw-bold">{job.department}</p>
-                                        <p className="text-muted small mb-1">Employment Type</p>
-                                        <p className="fw-bold">{job.employmentType}</p>
-                                        <p className="text-muted small mb-1">Salary</p>
-                                        <p className="fw-bold">{job.salary}</p>
-                                        <p className="text-muted small mb-1">Posted</p>
-                                        <p className="fw-bold mb-0">{new Date(job.postedDate).toLocaleDateString()}</p>
-                                    </div>
+                                <div className="rp-apply-card">
+                                    <h5 className="fw-bold mb-3" style={{ color: 'var(--rp-text)' }}>Job Details</h5>
+                                    <p className="small mb-1" style={{ color: 'var(--rp-text-muted)' }}>Department</p>
+                                    <p className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{job.department}</p>
+                                    <p className="small mb-1" style={{ color: 'var(--rp-text-muted)' }}>Employment Type</p>
+                                    <p className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{job.employmentType}</p>
+                                    <p className="small mb-1" style={{ color: 'var(--rp-text-muted)' }}>Salary</p>
+                                    <p className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{job.salary}</p>
+                                    <p className="small mb-1" style={{ color: 'var(--rp-text-muted)' }}>Posted</p>
+                                    <p className="fw-semibold mb-0" style={{ color: 'var(--rp-text)' }}>{new Date(job.postedDate).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Candidates Table */}
-                        <div className="card border-0 shadow-sm">
-                            <div className="card-body">
-                                <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                                    <div>
-                                        <h5 className="mb-1">Candidates</h5>
-                                        <small className="text-muted">
-                                            Screening {candidates.length} candidates against role requirements
-                                        </small>
-                                    </div>
-                                    <div className="d-flex gap-2">
-                                        <div className="input-group" style={{ width: '220px' }}>
-                                            <span className="input-group-text bg-light border-0">
-                                                <i className="bi bi-search text-muted"></i>
-                                            </span>
-                                            <input
-                                                type="text"
-                                                className="form-control bg-light border-0"
-                                                placeholder="Search by name, email..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                        </div>
-                                        <select
-                                            className="form-select"
-                                            style={{ width: '160px' }}
-                                            value={sortBy}
-                                            onChange={(e) => setSortBy(e.target.value)}
-                                        >
-                                            <option value="score">Sort: Match Score</option>
-                                            <option value="recent">Sort: Recent</option>
-                                        </select>
-                                    </div>
+                        <div className="rp-apply-card">
+                            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                                <div>
+                                    <h5 className="fw-bold mb-1" style={{ color: 'var(--rp-text)' }}>Candidates</h5>
+                                    <small style={{ color: 'var(--rp-text-muted)' }}>
+                                        Screening {candidates.length} candidates against role requirements
+                                    </small>
                                 </div>
-
-                                {candidatesLoading ? (
-                                    <div className="text-center py-5">
-                                        <div className="spinner-border text-primary" role="status"></div>
+                                <div className="d-flex gap-2">
+                                    <div className="input-group" style={{ width: '220px' }}>
+                                        <span className="input-group-text" style={{ background: 'var(--rp-surface-2)', border: '1px solid var(--rp-border)' }}>
+                                            <i className="bi bi-search" style={{ color: 'var(--rp-text-muted)' }}></i>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            className="form-control rp-apply-input"
+                                            placeholder="Search by name, email..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
                                     </div>
-                                ) : filteredCandidates.length === 0 ? (
-                                    <div className="text-center py-5 text-muted">No candidates found for this job yet.</div>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table align-middle">
-                                            <thead>
-                                                <tr className="text-muted small text-uppercase">
-                                                    <th>Candidate</th>
-                                                    <th>Match Score</th>
-                                                    <th>Applied Date</th>
-                                                    <th>Status</th>
-                                                    <th className="text-end">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredCandidates.map((c) => (
-                                                    <tr key={c.id}>
-                                                        <td>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <div
-                                                                    className="rounded-circle bg-primary-subtle d-flex align-items-center justify-content-center fw-bold text-primary"
-                                                                    style={{ width: '36px', height: '36px', fontSize: '0.8rem' }}
-                                                                >
-                                                                    {c.name?.charAt(0) || '?'}
-                                                                </div>
-                                                                <div>
-                                                                    <div className="fw-semibold">{c.name}</div>
-                                                                    <small className="text-muted">{c.email}</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td style={{ minWidth: '140px' }}>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <div className="progress flex-grow-1" style={{ height: '5px' }}>
-                                                                    <div
-                                                                        className="progress-bar bg-primary"
-                                                                        style={{ width: `${c.matchScore || 0}%` }}
-                                                                    ></div>
-                                                                </div>
-                                                                <small className="fw-semibold">{c.matchScore || 0}%</small>
-                                                            </div>
-                                                        </td>
-                                                        <td className="text-muted small">
-                                                            {new Date(c.appliedDate).toLocaleDateString()}
-                                                        </td>
-                                                        <td>
-                                                            <StatusBadge status={c.status} />
-                                                        </td>
-                                                        <td className="text-end">
-                                                            <button
-                                                                className="btn btn-primary btn-sm"
-                                                                onClick={() => navigate(`/candidate/${c.candidateId}`)}
-                                                            >
-                                                                View Profile
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+                                    <select
+                                        className="form-select rp-apply-input"
+                                        style={{ width: '160px' }}
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                    >
+                                        <option value="score">Sort: Match Score</option>
+                                        <option value="recent">Sort: Recent</option>
+                                    </select>
+                                </div>
                             </div>
+
+                            {candidatesLoading ? (
+                                <div className="text-center py-5">
+                                    <div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} role="status"></div>
+                                </div>
+                            ) : filteredCandidates.length === 0 ? (
+                                <div className="text-center py-5" style={{ color: 'var(--rp-text-muted)' }}>No candidates found for this job yet.</div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table align-middle rp-dark-table">
+                                        <thead>
+                                            <tr className="small text-uppercase">
+                                                <th>Candidate</th>
+                                                <th>Match Score</th>
+                                                <th>Applied Date</th>
+                                                <th>Status</th>
+                                                <th className="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredCandidates.map((c) => (
+                                                <tr key={c.id}>
+                                                    <td>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <div
+                                                                className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                                                style={{ width: '36px', height: '36px', fontSize: '0.8rem', background: 'var(--rp-gradient)', color: '#fff' }}
+                                                            >
+                                                                {c.name?.charAt(0) || '?'}
+                                                            </div>
+                                                            <div>
+                                                                <div className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{c.name}</div>
+                                                                <small style={{ color: 'var(--rp-text-muted)' }}>{c.email}</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ minWidth: '140px' }}>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <div className="progress flex-grow-1" style={{ height: '5px', background: 'var(--rp-surface-2)' }}>
+                                                                <div
+                                                                    className="progress-bar"
+                                                                    style={{ width: `${c.matchScore || 0}%`, background: 'var(--rp-accent-1)' }}
+                                                                ></div>
+                                                            </div>
+                                                            <small className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{c.matchScore || 0}%</small>
+                                                        </div>
+                                                    </td>
+                                                    <td className="small" style={{ color: 'var(--rp-text-muted)' }}>
+                                                        {new Date(c.appliedDate).toLocaleDateString()}
+                                                    </td>
+                                                    <td>
+                                                        <StatusBadge status={c.status} />
+                                                    </td>
+                                                    <td className="text-end">
+                                                        <button
+                                                            className="rp-btn-gradient btn-sm"
+                                                            onClick={() => navigate(`/candidate/${c.candidateId}`)}
+                                                        >
+                                                            View Profile
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </main>
             </div>
 
             {/* Delete Confirmation Modal */}
-            <div className={`modal ${showDeleteModal ? 'show d-block' : ''}`} style={{ backgroundColor: showDeleteModal ? 'rgba(0,0,0,0.5)' : '' }}>
-                <div className="modal-dialog">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h5 className="modal-title">Delete Job</h5>
-                            <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
-                        </div>
-                        <div className="modal-body">
-                            <p>Are you sure you want to delete this job posting? This action cannot be undone.</p>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
-                                Cancel
-                            </button>
-                            <button type="button" className="btn btn-danger" onClick={handleDeleteJob} disabled={loading}>
-                                {loading ? 'Deleting...' : 'Delete'}
-                            </button>
+            {showDeleteModal && (
+                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.7)' }} onClick={() => setShowDeleteModal(false)}>
+                    <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+                        <div className="rp-modal-content">
+                            <div className="rp-modal-header">
+                                <h5 className="fw-bold mb-0" style={{ color: '#fff' }}>Delete Job</h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowDeleteModal(false)}></button>
+                            </div>
+                            <div className="p-4">
+                                <p style={{ color: 'var(--rp-text)' }}>Are you sure you want to delete this job posting? This action cannot be undone.</p>
+                            </div>
+                            <div className="p-4 pt-0 d-flex gap-2">
+                                <button type="button" className="rp-btn-outline w-100" onClick={() => setShowDeleteModal(false)} disabled={deleteLoading}>
+                                    Cancel
+                                </button>
+                                {/* 👇 UPDATED: uses deleteLoading instead of global loading, calls handleDeleteJob directly */}
+                                <button
+                                    type="button"
+                                    className="btn w-100"
+                                    style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600 }}
+                                    onClick={handleDeleteJob}
+                                    disabled={deleteLoading}
+                                >
+                                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </>
+            )}
+        </div>
     );
 }

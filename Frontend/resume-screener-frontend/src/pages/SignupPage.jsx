@@ -28,27 +28,41 @@ export default function SignupPage() {
     }
   };
 
+  const isRecruiter = formData.role === 'Recruiter';
+
   return (
-    <div
-      className="d-flex justify-content-center align-items-center"
-      style={{ minHeight: '100vh', backgroundColor: '#eef1f8' }}
-    >
-      <div
-        className="card border-0 shadow-sm p-4"
-        style={{ maxWidth: '420px', width: '100%', borderRadius: '16px' }}
-      >
-        <div className="card-body">
-          <h4 className="fw-bold text-primary mb-1">Create Account</h4>
-          <p className="text-muted small mb-4">Choose your account type to get started.</p>
+    <div className="rp-landing">
+      <div className="rp-blob rp-blob-1" />
+      <div className="rp-blob rp-blob-2" />
 
-          {error && <div className="alert alert-danger py-2 small">{error}</div>}
+      <div className="rp-auth-wrapper">
+        <div className="rp-auth-header">
+          <div className="rp-logo" style={{ fontSize: '2.2rem' }}>
+            RecruitPro
+          </div>
+          <p className="rp-auth-tagline">The Intelligence for Modern Talent</p>
+        </div>
 
-          <div className="d-flex gap-2 mb-4">
+        <div className="rp-auth-card">
+          <h4 className="fw-bold mb-1">Create Account</h4>
+          <p className="text-muted small mb-4">
+            Choose your account type to get started.
+          </p>
+
+          {error && <div className="rp-auth-alert">{error}</div>}
+
+          <div className="rp-role-toggle mb-4 w-100">
+            <div
+              className="rp-role-pill"
+              style={{
+                left: isRecruiter ? '4px' : '50%',
+                width: 'calc(50% - 4px)',
+              }}
+            />
             <button
               type="button"
-              className={`btn flex-grow-1 ${
-                formData.role === 'Recruiter' ? 'btn-primary' : 'btn-outline-secondary'
-              }`}
+              className={`rp-role-btn ${isRecruiter ? 'active' : ''}`}
+              style={{ flex: 1 }}
               onClick={() => setFormData({ ...formData, role: 'Recruiter' })}
             >
               <i className="bi bi-building me-2"></i>
@@ -56,10 +70,11 @@ export default function SignupPage() {
             </button>
             <button
               type="button"
-              className={`btn flex-grow-1 ${
-                formData.role === 'Candidate' ? 'btn-primary' : 'btn-outline-secondary'
-              }`}
-              onClick={() => setFormData({ ...formData, role: 'Candidate', companyName: '' })}
+              className={`rp-role-btn ${!isRecruiter ? 'active' : ''}`}
+              style={{ flex: 1 }}
+              onClick={() =>
+                setFormData({ ...formData, role: 'Candidate', companyName: '' })
+              }
             >
               <i className="bi bi-person me-2"></i>
               I'm Job Hunting
@@ -68,68 +83,96 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold small">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                className="form-control bg-light border-0"
-                placeholder="e.g. Ali Hassan"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {formData.role === 'Recruiter' && (
-              <div className="mb-3">
-                <label className="form-label fw-semibold small">Company Name</label>
+              <label className="rp-auth-label">Full Name</label>
+              <div className="rp-input-wrap">
+                <i className="bi bi-person rp-input-icon"></i>
                 <input
                   type="text"
-                  name="companyName"
-                  className="form-control bg-light border-0"
-                  placeholder="e.g. FinTech Pro"
-                  value={formData.companyName}
+                  name="fullName"
+                  className="rp-auth-input"
+                  placeholder="e.g. Ali Hassan"
+                  value={formData.fullName}
                   onChange={handleChange}
                   required
                 />
               </div>
+            </div>
+
+            {isRecruiter && (
+              <div className="mb-3">
+                <label className="rp-auth-label">Company Name</label>
+                <div className="rp-input-wrap">
+                  <i className="bi bi-building rp-input-icon"></i>
+                  <input
+                    type="text"
+                    name="companyName"
+                    className="rp-auth-input"
+                    placeholder="e.g. FinTech Pro"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
             )}
 
             <div className="mb-3">
-              <label className="form-label fw-semibold small">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                className="form-control bg-light border-0"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
+              <label className="rp-auth-label">Email Address</label>
+              <div className="rp-input-wrap">
+                <i className="bi bi-envelope rp-input-icon"></i>
+                <input
+                  type="email"
+                  name="email"
+                  className="rp-auth-input"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-semibold small">Password</label>
-              <input
-                type="password"
-                name="password"
-                className="form-control bg-light border-0"
-                placeholder="At least 6 characters"
-                value={formData.password}
-                onChange={handleChange}
-                minLength={6}
-                required
-              />
+              <label className="rp-auth-label">Password</label>
+              <div className="rp-input-wrap">
+                <i className="bi bi-lock rp-input-icon"></i>
+                <input
+                  type="password"
+                  name="password"
+                  className="rp-auth-input"
+                  placeholder="At least 6 characters"
+                  value={formData.password}
+                  onChange={handleChange}
+                  minLength={6}
+                  required
+                />
+              </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold" disabled={loading}>
-              {loading ? 'Creating account...' : `Sign Up as ${formData.role}`}
+            <button
+              type="submit"
+              className="rp-btn-gradient w-100 py-2 fw-semibold"
+              style={{ border: 'none' }}
+              disabled={loading}
+            >
+              {loading
+                ? 'Creating account...'
+                : `Sign Up as ${formData.role}`}{' '}
+              {!loading && <i className="bi bi-arrow-right ms-1"></i>}
             </button>
           </form>
 
-          <p className="text-center small text-muted mt-3 mb-0">
+          <div className="rp-auth-divider"></div>
+
+          <p className="rp-auth-footer-text mb-0">
             Already have an account? <Link to="/login">Log in</Link>
           </p>
+        </div>
+
+        <div className="rp-auth-below">
+          © 2026 RecruitPro AI. All rights reserved.{' '}
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
         </div>
       </div>
     </div>

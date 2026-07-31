@@ -88,10 +88,11 @@ const interviewSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+     // interviewSlice.js — fetchMyInterviews.fulfilled ke andar
       .addCase(fetchMyInterviews.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
-        state.interviews = Array.isArray(payload) ? payload : (payload?.data ?? []);
+        state.interviews = payload?.data?.data ?? (Array.isArray(payload?.data) ? payload.data : []);
       })
       .addCase(fetchMyInterviews.rejected, (state, action) => {
         state.loading = false;

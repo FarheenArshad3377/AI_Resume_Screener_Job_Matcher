@@ -1,116 +1,147 @@
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { logout } from '../store/slices/authSlice';
 
 export default function RecruiterNavbar({ toggleSidebar }) {
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
-    const handleLogout = () => {
-        dispatch(logout());
-        navigate('/login');
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
-            <div className="container-fluid">
-                {/* Toggle Sidebar Button */}
-                <button
-                    className="btn btn-link me-3"
-                    onClick={toggleSidebar}
-                    style={{ textDecoration: 'none' }}
-                >
-                    <i className="bi bi-list fs-5"></i>
-                </button>
+  const handleLogout = () => {
+    console.log('Logout clicked'); // 👈 temporary debug
+    dispatch(logout());
+    setMenuOpen(false);
+    navigate('/login');
+  };
 
-                {/* Brand */}
-                <a  className="navbar-brand fw-bold"
-                    href="/"
-                    onClick={(e) => { e.preventDefault(); navigate('/'); }}
-                    >
-                    RecruitPro AI
-                    </a>
+  const handleProfile = () => {
+    console.log('Profile clicked'); // 👈 temporary debug
+    setMenuOpen(false);
+    navigate('/recruiter/profile');
+  };
 
-                {/* Navbar Toggler for Mobile */}
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
+  return (
+    <nav className="rp-dash-navbar navbar navbar-expand-lg" style={{ position: 'relative', zIndex: 1000 }}>
+      <div className="container-fluid">
+        <button className="btn btn-link" onClick={toggleSidebar} style={{ marginRight: '10px', color: 'var(--rp-text-muted)' }}>
+          <i className="bi bi-list"></i>
+        </button>
+        <span className="rp-logo">RecruitPro</span>
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="navbar-nav ms-auto">
+            <li className="nav-item">
+              <a className="nav-link active" href="#dashboard" onClick={(e) => { e.preventDefault(); navigate('/recruiter/dashboard'); }}>
+                Dashboard
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#applications" onClick={(e) => { e.preventDefault(); navigate('/applications'); }}>
+                Applications
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#interviews" onClick={(e) => { e.preventDefault(); navigate('/recruiter/interviews'); }}>
+                Interviews
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#post-job" onClick={(e) => { e.preventDefault(); navigate('/post-job'); }}>
+                Post Job
+              </a>
+            </li>
+          </ul>
+          <div className="ms-3 d-flex align-items-center gap-2">
+            <button className="rp-icon-btn position-relative">
+              <i className="bi bi-bell"></i>
+              <span
+                className="position-absolute badge rounded-pill"
+                style={{ top: -4, right: -4, background: '#f87171', fontSize: '0.6rem' }}
+              >
+                3
+              </span>
+            </button>
+            <button className="rp-icon-btn"><i className="bi bi-gear"></i></button>
 
-                {/* Navbar Items */}
-                <div className="collapse navbar-collapse" id="navbarNav">
-                    <div className="ms-auto d-flex align-items-center gap-3">
-                        {/* Search */}
-                        <div className="input-group" style={{ maxWidth: '300px' }}>
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Search jobs..."
-                            />
-                            <button className="btn btn-outline-secondary btn-sm" type="button">
-                                <i className="bi bi-search"></i>
-                            </button>
-                        </div>
-
-                        {/* Notifications */}
-                        <button className="btn btn-link position-relative" style={{ textDecoration: 'none' }}>
-                            <i className="bi bi-bell fs-5 text-dark"></i>
-                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                            </span>
-                        </button>
-
-                        {/* User Menu */}
-                        <div className="dropdown">
-                            <button
-                                className="btn btn-link d-flex align-items-center gap-2"
-                                type="button"
-                                id="userMenu"
-                                data-bs-toggle="dropdown"
-                                style={{ textDecoration: 'none', color: 'inherit' }}
-                            >
-                                <div
-                                    className="rounded-circle bg-primary-subtle"
-                                    style={{ width: '36px', height: '36px' }}
-                                ></div>
-                                <i className="bi bi-chevron-down"></i>
-                            </button>
-
-                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                                <li>
-                                    <a  className="dropdown-item"
-                                        href="#profile"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            navigate('/recruiter/profile');
-                                        }}>
-                                        <i className="bi bi-person me-2"></i>Profile
-                                    </a>
-                                </li>
-                                <li>
-                                    <a className="dropdown-item" href="#settings">
-                                        <i className="bi bi-gear me-2"></i>Settings
-                                    </a>
-                                </li>
-                                <li>
-                                    <hr className="dropdown-divider" />
-                                </li>
-                                <li>
-                                    <button
-                                        className="dropdown-item text-danger"
-                                        onClick={handleLogout}
-                                    >
-                                        <i className="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+            <div ref={menuRef} style={{ position: 'relative', zIndex: 2000 }}>
+              <button
+                className="btn p-0 border-0 bg-transparent d-flex align-items-center"
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+              >
+                <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', background: 'var(--rp-gradient)', color: '#fff' }}>
+                  <i className="bi bi-person"></i>
                 </div>
+              </button>
+
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '110%',
+                    background: 'var(--rp-surface)',
+                    border: '1px solid var(--rp-border)',
+                    borderRadius: '10px',
+                    minWidth: '160px',
+                    zIndex: 3000,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleProfile}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 16px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--rp-text)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Profile
+                  </button>
+                  <hr style={{ margin: 0, borderColor: 'var(--rp-border)' }} />
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 16px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#f87171',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-        </nav>
-    );
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 }

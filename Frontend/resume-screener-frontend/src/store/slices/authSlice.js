@@ -45,14 +45,14 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         const result = action.payload?.data ?? action.payload;
-        state.token = action.payload.token;
-       state.user = {
-        fullName: action.payload.fullName,
-        email: action.payload.email,
-        role: action.payload.role,
-        companyName: action.payload.companyName,   // 👈 NEW
+        state.token = result.token;
+        state.user = {
+          fullName: result.fullName,
+          email: result.email,
+          role: result.role,
+          companyName: result.companyName,
         };
-        localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(state.user));
       })
       .addCase(login.rejected, (state, action) => {
@@ -66,14 +66,14 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         const result = action.payload?.data ?? action.payload;
-        state.token = action.payload.token;
+        state.token = result.token;
         state.user = {
-            fullName: action.payload.fullName,
-            email: action.payload.email,
-            role: action.payload.role,
-            companyName: action.payload.companyName,   // 👈 NEW
-            };
-        localStorage.setItem('token', action.payload.token);
+          fullName: result.fullName,
+          email: result.email,
+          role: result.role,
+          companyName: result.companyName,
+        };
+        localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(state.user));
       })
       .addCase(register.rejected, (state, action) => {
