@@ -15,43 +15,50 @@ namespace ResumeScreener.Api.Services
             _context = context;
         }
 
-        public async Task<PagedResult<JobListItemDto>> GetJobsAsync(string? status, int pageNumber, int pageSize)
+        public async Task<PagedResult<JobListItemDto>> GetJobsAsync(string? status, int pageNumber, int pageSize, int? recruiterId = null)
         {
-            var query = _context.Jobs.AsQueryable();
-
-            if (!string.IsNullOrEmpty(status) && status != "All")
             {
-                query = query.Where(j => j.Status == status);
-            }
+                var query = _context.Jobs.AsQueryable();
 
-            query = query.OrderByDescending(j => j.CreatedAt);
-
-            var totalCount = await query.CountAsync();
-
-            var jobs = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(j => new JobListItemDto
+                if (!string.IsNullOrEmpty(status) && status != "All")
                 {
-                    Id = j.Id,
-                    Title = j.Title,
-                    Department = j.Department,
-                    Description = j.Description,
-                    Location = j.Location,
-                    EmploymentType = j.EmploymentType,
-                    Salary = j.Salary,
-                    Status = j.Status,
-                    CreatedAt = j.CreatedAt
-                })
-                .ToListAsync();
+                    query = query.Where(j => j.Status == status);
+                }
 
-            return new PagedResult<JobListItemDto>
-            {
-                Data = jobs,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = totalCount
-            };
+                if (recruiterId.HasValue)
+                {
+                    query = query.Where(j => j.RecruiterId == recruiterId.Value);
+                }
+
+                query = query.OrderByDescending(j => j.CreatedAt);
+
+                var totalCount = await query.CountAsync();
+
+                var jobs = await query
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(j => new JobListItemDto
+                    {
+                        Id = j.Id,
+                        Title = j.Title,
+                        Department = j.Department,
+                        Description = j.Description,
+                        Location = j.Location,
+                        EmploymentType = j.EmploymentType,
+                        Salary = j.Salary,
+                        Status = j.Status,
+                        CreatedAt = j.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return new PagedResult<JobListItemDto>
+                {
+                    Data = jobs,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                };
+            }
         }
 
         public async Task<Job> GetJobByIdAsync(int id)

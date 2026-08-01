@@ -46,8 +46,12 @@ export default function ScheduleInterviewModal() {
   };
 
   const handleSubmit = () => {
-    if (!selectedCandidate || !jobId || !date || !time) {
-      alert('Please fill candidate, job, date and time.');
+    if (!selectedCandidate) {
+      alert('Please select a candidate from the dropdown list.');
+      return;
+    }
+    if (!jobId || !date || !time) {
+      alert('Please fill job, date and time.');
       return;
     }
     dispatch(scheduleInterview({
@@ -66,46 +70,65 @@ export default function ScheduleInterviewModal() {
   );
 
   return (
-    <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={() => dispatch(closeScheduleModal())}>
-      <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '14px' }}>
-          <div className="modal-header border-0">
-            <h5 className="modal-title fw-bold mb-0">Schedule New Interview</h5>
-            <button className="btn-close" onClick={() => dispatch(closeScheduleModal())}></button>
+    <div
+      className="modal show d-block"
+      style={{ background: 'rgba(0,0,0,0.7)' }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          dispatch(closeScheduleModal());
+        }
+      }}
+    >
+      <div className="modal-dialog modal-dialog-centered modal-lg" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="rp-modal-content">
+          <div className="rp-modal-header">
+            <h5 className="fw-bold mb-0" style={{ color: '#fff' }}>Schedule New Interview</h5>
+            <button className="btn-close btn-close-white" onClick={() => dispatch(closeScheduleModal())}></button>
           </div>
 
-          <div className="modal-body">
+          <div className="p-4">
             <div className="row g-3">
               {/* Candidate */}
               <div className="col-md-6">
-                <label className="form-label small fw-semibold">Candidate</label>
+                <label className="rp-filter-label mb-2">Candidate</label>
                 {selectedCandidate ? (
-                  <div className="d-flex align-items-center justify-content-between border rounded p-2">
-                    <span className="small">{selectedCandidate.name}</span>
-                    <button className="btn btn-sm btn-link text-danger p-0" onClick={() => setSelectedCandidate(null)}>
+                  <div
+                    className="d-flex align-items-center justify-content-between rounded p-2"
+                    style={{ background: 'var(--rp-surface-2)', border: '1px solid var(--rp-border)' }}
+                  >
+                    <span className="small" style={{ color: 'var(--rp-text)' }}>{selectedCandidate.name}</span>
+                    <button
+                      className="btn btn-sm btn-link p-0"
+                      style={{ color: '#f87171', textDecoration: 'none' }}
+                      onClick={() => setSelectedCandidate(null)}
+                    >
                       Change
                     </button>
                   </div>
                 ) : (
                   <div className="position-relative">
                     <input
-                      className="form-control"
+                      className="form-control rp-apply-input"
                       placeholder="Search candidate name..."
                       value={candidateQuery}
                       onChange={(e) => setCandidateQuery(e.target.value)}
                     />
-                    {candidateResults.length > 0 && candidateQuery && (
-                      <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 10, maxHeight: '160px', overflowY: 'auto' }}>
-                        {candidateResults.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            className="list-group-item list-group-item-action small"
-                            onClick={() => { setSelectedCandidate(c); setCandidateQuery(''); }}
-                          >
-                            {c.name} <span className="text-muted">— {c.email}</span>
-                          </button>
-                        ))}
+                    {candidateQuery.trim() && (
+                      <div className="rp-dropdown-list">
+                        {candidateResults.length > 0 ? (
+                          candidateResults.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              className="rp-dropdown-item"
+                              onClick={() => { setSelectedCandidate(c); setCandidateQuery(''); }}
+                            >
+                              {c.name} <span style={{ color: 'var(--rp-text-muted)' }}>— {c.email}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="rp-dropdown-empty">No candidates found</div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -114,8 +137,8 @@ export default function ScheduleInterviewModal() {
 
               {/* Job Posting */}
               <div className="col-md-6">
-                <label className="form-label small fw-semibold">Job Posting</label>
-                <select className="form-select" value={jobId} onChange={(e) => setJobId(e.target.value)}>
+                <label className="rp-filter-label mb-2">Job Posting</label>
+                <select className="form-select rp-apply-input" value={jobId} onChange={(e) => setJobId(e.target.value)}>
                   <option value="">Select active role</option>
                   {activeJobs.map((job) => (
                     <option key={job.id} value={job.id}>{job.title}</option>
@@ -125,27 +148,31 @@ export default function ScheduleInterviewModal() {
 
               {/* Interview Type */}
               <div className="col-md-6">
-                <label className="form-label small fw-semibold">Interview Type</label>
-                <select className="form-select" value={interviewType} onChange={(e) => setInterviewType(e.target.value)}>
+                <label className="rp-filter-label mb-2">Interview Type</label>
+                <select className="form-select rp-apply-input" value={interviewType} onChange={(e) => setInterviewType(e.target.value)}>
                   {interviewTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               {/* Date & Time */}
               <div className="col-md-6">
-                <label className="form-label small fw-semibold">Date & Time</label>
+                <label className="rp-filter-label mb-2">Date & Time</label>
                 <div className="d-flex gap-2">
-                  <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
-                  <input type="time" className="form-control" value={time} onChange={(e) => setTime(e.target.value)} />
+                  <input type="date" className="form-control rp-apply-input" value={date} onChange={(e) => setDate(e.target.value)} />
+                  <input type="time" className="form-control rp-apply-input" value={time} onChange={(e) => setTime(e.target.value)} />
                 </div>
               </div>
 
               {/* Assign Interviewers */}
               <div className="col-12">
-                <label className="form-label small fw-semibold">Assign Interviewer(s)</label>
+                <label className="rp-filter-label mb-2">Assign Interviewer(s)</label>
                 <div className="d-flex flex-wrap gap-2 mb-2">
                   {interviewers.map((i) => (
-                    <span key={i.id} className="badge bg-light text-dark border d-flex align-items-center gap-1">
+                    <span
+                      key={i.id}
+                      className="badge rounded-pill d-flex align-items-center gap-1"
+                      style={{ background: 'var(--rp-surface-2)', border: '1px solid var(--rp-border)', color: 'var(--rp-text)' }}
+                    >
                       {i.name}
                       <i className="bi bi-x-circle" style={{ cursor: 'pointer' }} onClick={() => toggleInterviewer(i)}></i>
                     </span>
@@ -153,23 +180,27 @@ export default function ScheduleInterviewModal() {
                 </div>
                 <div className="position-relative">
                   <input
-                    className="form-control"
+                    className="form-control rp-apply-input"
                     placeholder="+ Add Member"
                     value={teamQuery}
                     onChange={(e) => setTeamQuery(e.target.value)}
                   />
-                  {teamQuery && (
-                    <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 10, maxHeight: '150px', overflowY: 'auto' }}>
-                      {filteredTeam.map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          className="list-group-item list-group-item-action small"
-                          onClick={() => { toggleInterviewer(m); setTeamQuery(''); }}
-                        >
-                          {m.name}
-                        </button>
-                      ))}
+                  {teamQuery.trim() && (
+                    <div className="rp-dropdown-list">
+                      {filteredTeam.length > 0 ? (
+                        filteredTeam.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className="rp-dropdown-item"
+                            onClick={() => { toggleInterviewer(m); setTeamQuery(''); }}
+                          >
+                            {m.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="rp-dropdown-empty">No team members found</div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -177,9 +208,9 @@ export default function ScheduleInterviewModal() {
 
               {/* Meeting Link */}
               <div className="col-12">
-                <label className="form-label small fw-semibold">Meeting Link</label>
+                <label className="rp-filter-label mb-2">Meeting Link</label>
                 <input
-                  className="form-control"
+                  className="form-control rp-apply-input"
                   placeholder="https://zoom.us/j/..."
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
@@ -188,9 +219,9 @@ export default function ScheduleInterviewModal() {
 
               {/* Notes */}
               <div className="col-12">
-                <label className="form-label small fw-semibold">Interview Notes (Internal Only)</label>
+                <label className="rp-filter-label mb-2">Interview Notes (Internal Only)</label>
                 <textarea
-                  className="form-control"
+                  className="form-control rp-apply-textarea"
                   rows="2"
                   placeholder="Specific topics or focus areas for this session..."
                   value={notes}
@@ -199,15 +230,15 @@ export default function ScheduleInterviewModal() {
               </div>
             </div>
 
-            <div className="d-flex align-items-center gap-2 mt-3 text-muted small">
+            <div className="d-flex align-items-center gap-2 mt-3 small" style={{ color: 'var(--rp-text-muted)' }}>
               <i className="bi bi-magic"></i>
               AI will suggest preparation materials after scheduling.
             </div>
           </div>
 
-          <div className="modal-footer border-0">
-            <button className="btn btn-light" onClick={() => dispatch(closeScheduleModal())}>Cancel</button>
-            <button className="btn btn-primary" disabled={loading} onClick={handleSubmit}>
+          <div className="p-4 pt-0 d-flex justify-content-end gap-2">
+            <button className="rp-btn-outline" onClick={() => dispatch(closeScheduleModal())}>Cancel</button>
+            <button className="rp-btn-gradient" style={{ border: 'none' }} disabled={loading} onClick={handleSubmit}>
               {loading ? 'Sending...' : 'Send Invitation'}
             </button>
           </div>

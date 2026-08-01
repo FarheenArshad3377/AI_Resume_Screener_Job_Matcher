@@ -1,10 +1,20 @@
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../store/slices/authSlice';
 
 export default function CandidateNavbar({ toggleSidebar }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const navLinks = [
+    { label: 'Dashboard', path: '/my-applications' },
+    { label: 'Jobs', path: '/jobs' },
+    { label: 'Applications', path: '/my-applications' },
+    { label: 'Interviews', path: '/my-interviews' },
+  ];
 
   return (
     <nav className="rp-dash-navbar navbar navbar-expand-lg">
@@ -18,26 +28,17 @@ export default function CandidateNavbar({ toggleSidebar }) {
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <a className="nav-link" href="#dashboard" onClick={(e) => { e.preventDefault(); navigate('/my-applications'); }}>
-                Dashboard
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link active" href="#jobs" onClick={(e) => { e.preventDefault(); navigate('/jobs'); }}>
-                Jobs
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#applications" onClick={(e) => { e.preventDefault(); navigate('/my-applications'); }}>
-                Applications
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#interviews" onClick={(e) => { e.preventDefault(); navigate('/my-interviews'); }}>
-                Interviews
-              </a>
-            </li>
+            {navLinks.map((link) => (
+              <li className="nav-item" key={link.label}>
+                <a
+                  className={`nav-link ${isActive(link.path) ? 'active' : ''}`}
+                  href={`#${link.label.toLowerCase()}`}
+                  onClick={(e) => { e.preventDefault(); navigate(link.path); }}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
           <div className="ms-3 d-flex align-items-center gap-2">
             <button className="rp-icon-btn"><i className="bi bi-bell"></i></button>
