@@ -1,4 +1,5 @@
 ﻿using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Text;
@@ -27,7 +28,10 @@ namespace ResumeScreener.Api.Services
             {
                 foreach (var page in document.GetPages())
                 {
-                    text.AppendLine(page.Text);
+                    // 👇 FIX: GetWords() words ko position ke hisab se alag nikalta hai,
+                    // jo page.Text ke muqable spacing preserve karta hai
+                    var words = page.GetWords();
+                    text.AppendLine(string.Join(" ", words.Select(w => w.Text)));
                 }
             }
 

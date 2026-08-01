@@ -17,7 +17,7 @@ namespace ResumeScreener.Api.DTOs
         public string? Location { get; set; }
 
         public string? EmploymentType { get; set; }
-
+        public string? ExperienceLevel { get; set; }
         public string? Salary { get; set; }
 
         public List<string> Requirements { get; set; } = new();

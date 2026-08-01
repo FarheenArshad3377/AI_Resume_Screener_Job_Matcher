@@ -5,6 +5,7 @@ using ResumeScreener.Api.DTOs;
 namespace ResumeScreener.Api.Services
 {
     public class CandidateService : ICandidateService
+
     {
         private readonly ApplicationDbContext _context;
 

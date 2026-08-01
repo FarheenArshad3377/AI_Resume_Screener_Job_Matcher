@@ -251,6 +251,7 @@ namespace ResumeScreener.Api.Controllers
         }
 
         // DELETE: api/recruiter/jobs/{jobId}
+        // DELETE: api/recruiter/jobs/{jobId}
         [HttpDelete("{jobId}")]
         public async Task<IActionResult> DeleteJob(int jobId)
         {
@@ -266,6 +267,49 @@ namespace ResumeScreener.Api.Controllers
                 return Forbid();
             }
 
+            //job ke saare applications dhndo 
+            var applicationIds = await _context.Applications
+                .Where(a => a.JobId == jobId)
+                .Select(a => a.Id)
+                .ToListAsync();
+
+            if (applicationIds.Any())
+            {
+                // first do interviews  related feedback aur interviewer records delete 
+                var interviewIds = await _context.Interviews
+                    .Where(i => applicationIds.Contains(i.ApplicationId))
+                    .Select(i => i.Id)
+                    .ToListAsync();
+
+                if (interviewIds.Any())
+                {
+                    var feedbacks = await _context.InterviewFeedbacks
+                        .Where(f => interviewIds.Contains(f.InterviewId))
+                        .ToListAsync();
+                    _context.InterviewFeedbacks.RemoveRange(feedbacks);
+
+                    var interviewers = await _context.InterviewInterviewers
+                        .Where(ii => interviewIds.Contains(ii.InterviewId))
+                        .ToListAsync();
+                    _context.InterviewInterviewers.RemoveRange(interviewers);
+
+                    var interviews = await _context.Interviews
+                        .Where(i => applicationIds.Contains(i.ApplicationId))
+                        .ToListAsync();
+                    _context.Interviews.RemoveRange(interviews);
+
+                    await _context.SaveChangesAsync();
+                }
+
+                // applications delete 
+                var applications = await _context.Applications
+                    .Where(a => a.JobId == jobId)
+                    .ToListAsync();
+                _context.Applications.RemoveRange(applications);
+                await _context.SaveChangesAsync();
+            }
+
+            // job delete 
             _context.Jobs.Remove(job);
             await _context.SaveChangesAsync();
 
@@ -301,6 +345,7 @@ namespace ResumeScreener.Api.Controllers
                 Salary = dto.Salary,
                 Requirements = string.Join('\n', dto.Requirements),
                 RequiredSkills = string.Join(", ", dto.Skills),
+                ExperienceLevel = dto.ExperienceLevel,
                 Status = "Draft",
                 RecruiterId = GetRecruiterId(),
                 CreatedAt = DateTime.UtcNow
@@ -365,6 +410,7 @@ namespace ResumeScreener.Api.Controllers
             job.Location = dto.Location;
             job.EmploymentType = dto.EmploymentType;
             job.Salary = dto.Salary;
+            job.ExperienceLevel = dto.ExperienceLevel;
             job.Requirements = string.Join('\n', dto.Requirements);
             job.RequiredSkills = string.Join(", ", dto.Skills);
             job.UpdatedDate = DateTime.UtcNow;

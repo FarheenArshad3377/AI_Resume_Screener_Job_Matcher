@@ -83,20 +83,25 @@ export default function JobDetailDiscription() {
     const handleReopenJob = () => job?.id && dispatch(reopenJob(job.id));
 
     // 👇 UPDATED: uses its own deleteLoading state instead of the global `loading`
-   const handleDeleteJob = async () => {
+const handleDeleteJob = async () => {
     console.log('🔥🔥🔥 NEW CODE IS RUNNING 🔥🔥🔥');
-    if (!job?.id) return;
+    console.log('job.id is:', job?.id);
+    if (!job?.id) {
+        console.log('❌ job.id missing, returning early');
+        return;
+    }
     setDeleteLoading(true);
     try {
+        console.log('Dispatching deleteJob...');
         await dispatch(deleteJob(job.id)).unwrap();
+        console.log('✅ Delete succeeded');
         setShowDeleteModal(false);
     } catch (err) {
-        console.error('Delete failed:', err);
+        console.error('❌ Delete failed:', err);
     } finally {
         setDeleteLoading(false);
     }
 };
-
     const handleEditJob = () => navigate(`/jobs/${jobId}/edit`);
 
     const avgMatchScore = useMemo(() => {
@@ -419,36 +424,58 @@ export default function JobDetailDiscription() {
             </div>
 
             {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.7)' }} onClick={() => setShowDeleteModal(false)}>
-                    <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                        <div className="rp-modal-content">
-                            <div className="rp-modal-header">
-                                <h5 className="fw-bold mb-0" style={{ color: '#fff' }}>Delete Job</h5>
-                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowDeleteModal(false)}></button>
-                            </div>
-                            <div className="p-4">
-                                <p style={{ color: 'var(--rp-text)' }}>Are you sure you want to delete this job posting? This action cannot be undone.</p>
-                            </div>
-                            <div className="p-4 pt-0 d-flex gap-2">
-                                <button type="button" className="rp-btn-outline w-100" onClick={() => setShowDeleteModal(false)} disabled={deleteLoading}>
-                                    Cancel
-                                </button>
-                                {/* 👇 UPDATED: uses deleteLoading instead of global loading, calls handleDeleteJob directly */}
-                                <button
-                                    type="button"
-                                    className="btn w-100"
-                                    style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600 }}
-                                    onClick={handleDeleteJob}
-                                    disabled={deleteLoading}
-                                >
-                                    {deleteLoading ? 'Deleting...' : 'Delete'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+           {showDeleteModal && (
+    <>
+        {/* Backdrop — apna alag element, sirf isi pe click se close */}
+        <div
+            onClick={() => setShowDeleteModal(false)}
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.7)',
+                zIndex: 2000
+            }}
+        />
+
+        {/* Dialog — backdrop ka child nahi, is liye click leak nahi hoga */}
+        <div
+            style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 2001,
+                width: '100%',
+                maxWidth: '500px',
+                pointerEvents: 'auto'
+            }}
+        >
+            <div className="rp-modal-content">
+                <div className="rp-modal-header">
+                    <h5 className="fw-bold mb-0" style={{ color: '#fff' }}>Delete Job</h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowDeleteModal(false)}></button>
                 </div>
-            )}
+                <div className="p-4">
+                    <p style={{ color: 'var(--rp-text)' }}>Are you sure you want to delete this job posting? This action cannot be undone.</p>
+                </div>
+                <div className="p-4 pt-0 d-flex gap-2">
+                    <button type="button" className="rp-btn-outline w-100" onClick={() => setShowDeleteModal(false)} disabled={deleteLoading}>
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="btn w-100"
+                        style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600 }}
+                        onClick={handleDeleteJob}
+                        disabled={deleteLoading}
+                    >
+                        {deleteLoading ? 'Deleting...' : 'Delete'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </>
+)}
         </div>
     );
 }

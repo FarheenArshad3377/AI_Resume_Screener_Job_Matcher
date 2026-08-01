@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import recruiterAPI from '../api/recruiterAPI';
+import axiosInstance from '../api/axiosInstance';
 import RecruiterNavbar from '../components/RecruiterNavbar';
-
+import axios from 'axios';
 function getScoreColor(score) {
     if (score >= 70) return '#4ade80';
     if (score >= 40) return '#f59e0b';
@@ -16,11 +17,27 @@ export default function CandidateProfileRecruiterView() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [resumeBlobUrl, setResumeBlobUrl] = useState(null);
+    const [resumeLoading, setResumeLoading] = useState(false);
 
     useEffect(() => {
         loadProfile();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [candidateId]);
+
+    // 👇 UPDATED: resume ab candidate.resumeUrl se load hota hai (candidate profile load hone ke baad),
+    // ek galat guessed endpoint (/candidates/{id}/resume) ki jagah jo 404 de raha tha
+    useEffect(() => {
+        if (candidate?.resumeUrl) {
+            loadResume(candidate.resumeUrl);
+        } else {
+            setResumeBlobUrl(null);
+        }
+        return () => {
+            if (resumeBlobUrl) URL.revokeObjectURL(resumeBlobUrl);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [candidate?.resumeUrl]);
 
     const loadProfile = async () => {
         setLoading(true);
@@ -34,6 +51,27 @@ export default function CandidateProfileRecruiterView() {
             setLoading(false);
         }
     };
+
+    // 👇 UPDATED: takes the resumeUrl coming from the candidate object,
+    // fetches it through axiosInstance (so auth headers are attached), then makes a blob URL
+const loadResume = async (resumeUrl) => {
+    setResumeLoading(true);
+    try {
+        const fullUrl = resumeUrl.startsWith('http')
+            ? resumeUrl
+            : `https://recruitpro-api.runasp.net${resumeUrl.startsWith('/') ? '' : '/'}${resumeUrl}`;
+
+        // Static file hai, auth header ki zaroorat nahi (agar UseStaticFiles auth se pehle hai)
+        const response = await axios.get(fullUrl, { responseType: 'blob' });
+        const blobUrl = URL.createObjectURL(response.data);
+        setResumeBlobUrl(blobUrl);
+    } catch (err) {
+        console.error('Resume load failed:', err);
+        setResumeBlobUrl(null);
+    } finally {
+        setResumeLoading(false);
+    }
+};
 
     const latestApplication = candidate?.applications?.[0] || null;
 
@@ -99,7 +137,7 @@ export default function CandidateProfileRecruiterView() {
 
             <div style={{ position: 'relative', zIndex: 1 }}>
                 <main className="p-4">
-                    <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                    <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb" className="mb-4">
                             <ol className="breadcrumb mb-0">
@@ -132,136 +170,94 @@ export default function CandidateProfileRecruiterView() {
 
                         <div className="row g-4">
                             {/* Left Column */}
-                            <div className="col-lg-4">
-                                {/* Header Card */}
+                            <div className="col-lg-3">
                                 <div className="rp-apply-card mb-4 text-center">
                                     <div
                                         className="rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto mb-3"
-                                        style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: 'var(--rp-gradient)', color: '#fff' }}
+                                        style={{ width: '84px', height: '84px', fontSize: '1.8rem', background: 'var(--rp-gradient)', color: '#fff' }}
                                     >
                                         {candidate.name?.charAt(0) || '?'}
                                     </div>
                                     <h5 className="mb-1" style={{ color: 'var(--rp-text)' }}>{candidate.name}</h5>
                                     <p className="small mb-3" style={{ color: 'var(--rp-text-muted)' }}>{candidate.email}</p>
 
-                                   <div className="d-flex gap-2">
-                                        <button
-                                            className="rp-btn-outline btn-sm flex-grow-1"
-                                            style={{ color: '#f87171', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
-                                            onClick={() => handleStatusChange('Rejected')}
-                                            disabled={actionLoading || !latestApplication}
-                                        >
-                                            Reject
-                                        </button>
-                                        <button
-                                            className="rp-btn-outline btn-sm flex-grow-1"
-                                            style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
-                                            onClick={() => window.open(`mailto:${candidate.email}`)}
-                                        >
-                                            Contact
-                                        </button>
-                                        <button
-                                            className="rp-btn-gradient btn-sm flex-grow-1"
-                                            style={{ border: 'none', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
-                                            onClick={() => handleStatusChange('Shortlisted')}
-                                            disabled={actionLoading || !latestApplication}
-                                        >
-                                            Shortlist
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Match Score */}
-                                <div className="rp-apply-card mb-4 text-center">
-                                    <p className="small mb-3" style={{ color: 'var(--rp-text-muted)' }}>AI Match Score</p>
                                     <div
-                                        className="rounded-circle mx-auto d-flex flex-column align-items-center justify-content-center"
+                                        className="rounded-circle mx-auto d-flex flex-column align-items-center justify-content-center mb-3"
                                         style={{ width: '120px', height: '120px', border: `4px solid ${scoreColor}`, color: scoreColor }}
                                     >
                                         <h2 className="mb-0">{score}%</h2>
-                                        <small style={{ color: 'var(--rp-text-muted)' }}>Match Score</small>
+                                        <small style={{ color: 'var(--rp-text-muted)', fontSize: '0.65rem', letterSpacing: '0.05em' }}>AI MATCH</small>
                                     </div>
-                                    {latestApplication?.aiSummary && (
-                                        <p className="small mt-3 mb-0" style={{ color: 'var(--rp-text-muted)' }}>{latestApplication.aiSummary}</p>
-                                    )}
+
+                                    <div className="d-flex flex-column gap-2">
+                                        <button
+                                            className="rp-btn-gradient btn-sm w-100"
+                                            style={{ border: 'none' }}
+                                            onClick={() => handleStatusChange('Shortlisted')}
+                                            disabled={actionLoading || !latestApplication}
+                                        >
+                                            <i className="bi bi-calendar-check me-1"></i>Shortlist
+                                        </button>
+                                        <div className="d-flex gap-2">
+                                            <button
+                                                className="rp-btn-outline btn-sm flex-grow-1"
+                                                style={{ color: '#f87171' }}
+                                                onClick={() => handleStatusChange('Rejected')}
+                                                disabled={actionLoading || !latestApplication}
+                                            >
+                                                Reject
+                                            </button>
+                                            <button
+                                                className="rp-btn-outline btn-sm flex-grow-1"
+                                                onClick={() => window.open(`mailto:${candidate.email}`)}
+                                            >
+                                                Contact
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Skills */}
-                                <div className="rp-apply-card mb-4">
-                                    <p className="fw-semibold mb-2" style={{ color: 'var(--rp-text)' }}>
-                                        <i className="bi bi-check-circle me-2" style={{ color: '#4ade80' }}></i>Matched Skills
+                                <div className="rp-apply-card">
+                                    <p className="fw-semibold mb-2 small text-uppercase" style={{ color: 'var(--rp-text-muted)', letterSpacing: '0.05em' }}>
+                                        <i className="bi bi-graph-up me-2"></i>AI Skill Breakdown
+                                    </p>
+                                    <p className="small mb-2" style={{ color: 'var(--rp-text)' }}>
+                                        Matched Skills <span style={{ color: 'var(--rp-text-muted)' }}>{matchedSkills.length}</span>
                                     </p>
                                     <div className="d-flex flex-wrap gap-2 mb-3">
                                         {matchedSkills.length > 0 ? (
                                             matchedSkills.map((skill) => (
-                                                <span key={skill} className="badge rounded-pill rp-badge-success">
-                                                    {skill}
-                                                </span>
+                                                <span key={skill} className="badge rounded-pill rp-badge-success">{skill}</span>
                                             ))
                                         ) : (
-                                            <small style={{ color: 'var(--rp-text-muted)' }}>No matched skills recorded</small>
+                                            <small style={{ color: 'var(--rp-text-muted)' }}>None recorded</small>
                                         )}
                                     </div>
-
-                                    <p className="fw-semibold mb-2" style={{ color: 'var(--rp-text)' }}>
-                                        <i className="bi bi-exclamation-circle me-2" style={{ color: '#f59e0b' }}></i>Missing Skills
+                                    <p className="small mb-2" style={{ color: 'var(--rp-text)' }}>
+                                        Gaps / Low Confidence <span style={{ color: 'var(--rp-text-muted)' }}>{missingSkills.length}</span>
                                     </p>
                                     <div className="d-flex flex-wrap gap-2">
                                         {missingSkills.length > 0 ? (
                                             missingSkills.map((skill) => (
-                                                <span key={skill} className="badge rounded-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-                                                    {skill}
-                                                </span>
+                                                <span key={skill} className="badge rounded-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>{skill}</span>
                                             ))
                                         ) : (
                                             <small style={{ color: 'var(--rp-text-muted)' }}>None — full match!</small>
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Notes */}
-                                {candidate.notes && candidate.notes.length > 0 && (
-                                    <div className="rp-apply-card">
-                                        <p className="fw-semibold mb-2" style={{ color: 'var(--rp-text)' }}>
-                                            <i className="bi bi-chat-left-text me-2"></i>Hiring Manager Notes
-                                        </p>
-                                        {candidate.notes.map((note) => (
-                                            <div key={note.id} className="mb-2 pb-2" style={{ borderBottom: '1px solid var(--rp-border)' }}>
-                                                <p className="small mb-1" style={{ color: 'var(--rp-text)' }}>{note.text}</p>
-                                                <small style={{ fontSize: '0.72rem', color: 'var(--rp-text-muted)' }}>
-                                                    {note.createdBy} · {new Date(note.createdAt).toLocaleDateString()}
-                                                </small>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
-                            {/* Right Column */}
-                            <div className="col-lg-8">
-                                {/* Contact Info */}
+                            {/* Middle Column */}
+                            <div className="col-lg-6">
                                 <div className="rp-apply-card mb-4">
-                                    <h5 className="mb-3" style={{ color: 'var(--rp-text)' }}>Contact Information</h5>
-                                    <div className="row">
-                                        <div className="col-md-6 mb-3">
-                                            <small className="d-block" style={{ color: 'var(--rp-text-muted)' }}>Email</small>
-                                            <span className="fw-semibold" style={{ color: 'var(--rp-text)' }}>{candidate.email}</span>
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <small className="d-block" style={{ color: 'var(--rp-text-muted)' }}>Resume</small>
-                                            <a
-                                                href={`http://localhost:5286${candidate.resumeUrl}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                style={{ color: 'var(--rp-accent-2)' }}
-                                            >
-                                                <i className="bi bi-file-earmark-pdf me-1"></i>View Resume
-                                            </a>
-                                        </div>
-                                    </div>
+                                    <h5 className="mb-3" style={{ color: 'var(--rp-text)' }}>AI Summary</h5>
+                                    <p className="small mb-0" style={{ color: 'var(--rp-text-muted)', lineHeight: '1.6' }}>
+                                        {latestApplication?.aiSummary || 'No AI summary available yet.'}
+                                    </p>
                                 </div>
 
-                                {/* Application History */}
                                 <div className="rp-apply-card mb-4">
                                     <h5 className="mb-3" style={{ color: 'var(--rp-text)' }}>Application History</h5>
                                     {candidate.applications && candidate.applications.length > 0 ? (
@@ -307,12 +303,68 @@ export default function CandidateProfileRecruiterView() {
                                     )}
                                 </div>
 
-                                {/* Resume Text */}
+                                {candidate.notes && candidate.notes.length > 0 && (
+                                    <div className="rp-apply-card mb-4">
+                                        <p className="fw-semibold mb-2" style={{ color: 'var(--rp-text)' }}>
+                                            <i className="bi bi-chat-left-text me-2"></i>Hiring Manager Notes
+                                        </p>
+                                        {candidate.notes.map((note) => (
+                                            <div key={note.id} className="mb-2 pb-2" style={{ borderBottom: '1px solid var(--rp-border)' }}>
+                                                <p className="small mb-1" style={{ color: 'var(--rp-text)' }}>{note.text}</p>
+                                                <small style={{ fontSize: '0.72rem', color: 'var(--rp-text-muted)' }}>
+                                                    {note.createdBy} · {new Date(note.createdAt).toLocaleDateString()}
+                                                </small>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div className="rp-apply-card">
                                     <h5 className="mb-3" style={{ color: 'var(--rp-text)' }}>Resume Content</h5>
-                                    <p className="small" style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: 'var(--rp-text-muted)' }}>
+                                    <p className="small" style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: 'var(--rp-text-muted)', maxHeight: '260px', overflowY: 'auto' }}>
                                         {candidate.parsedText || 'No resume text available.'}
                                     </p>
+                                </div>
+                            </div>
+
+                            {/* Right Column — Resume Preview */}
+                            <div className="col-lg-3">
+                                <div className="rp-apply-card p-0 rp-resume-panel">
+                                    <div className="d-flex align-items-center justify-content-between p-3" style={{ borderBottom: '1px solid var(--rp-border)' }}>
+                                        <span className="fw-semibold small" style={{ color: 'var(--rp-text)' }}>
+                                            <i className="bi bi-file-earmark-text me-2"></i>Resume Preview
+                                        </span>
+                                        {resumeBlobUrl && (
+                                            <a href={resumeBlobUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--rp-accent-2)' }}>
+                                                <i className="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    {resumeLoading ? (
+                                        <div className="p-4 text-center">
+                                            <div className="spinner-border spinner-border-sm" style={{ color: 'var(--rp-accent-1)' }} role="status"></div>
+                                        </div>
+                                    ) : resumeBlobUrl ? (
+                                        <iframe src={resumeBlobUrl} title="Resume Preview" className="rp-resume-iframe" />
+                                    ) : (
+                                        <div className="p-4 text-center small" style={{ color: 'var(--rp-text-muted)' }}>
+                                            {candidate.resumeUrl ? 'Unable to load resume preview.' : 'No resume file available.'}
+                                        </div>
+                                    )}
+
+                                    {resumeBlobUrl && (
+                                        <div className="p-3 d-flex gap-2" style={{ borderTop: '1px solid var(--rp-border)' }}>
+                                            <a
+                                                href={resumeBlobUrl}
+                                                download={`${candidate.name || 'resume'}.pdf`}
+                                                className="rp-btn-outline btn-sm flex-grow-1 text-center"
+                                                style={{ textDecoration: 'none' }}
+                                            >
+                                                <i className="bi bi-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

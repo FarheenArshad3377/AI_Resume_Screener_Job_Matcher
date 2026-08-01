@@ -38,15 +38,19 @@ namespace ResumeScreener.Api.Controllers
                 Data = new { applicationId = result.ApplicationId, matchScore = result.MatchScore, status = result.Status }
             });
         }
-
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetJobs(
             [FromQuery] string? status = "Open",
             [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 20)
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? q = null,
+            [FromQuery] string? location = null,
+            [FromQuery] string? jobType = null,
+            [FromQuery] string? experience = null,
+            [FromQuery] string? sortBy = null)
         {
-            var result = await _jobService.GetJobsAsync(status, pageNumber, pageSize);
+            var result = await _jobService.GetJobsAsync(status, pageNumber, pageSize, null, q, location, jobType, experience, sortBy);
             return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Jobs fetched successfully", Data = result });
         }
 

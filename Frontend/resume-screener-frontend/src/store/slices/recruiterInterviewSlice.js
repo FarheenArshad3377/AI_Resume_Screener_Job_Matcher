@@ -169,7 +169,11 @@ const recruiterInterviewSlice = createSlice({
     setPage: (state, action) => { state.page = action.payload; },
 
     openScheduleModal: (state) => { state.scheduleModalOpen = true; },
-    closeScheduleModal: (state) => { state.scheduleModalOpen = false; state.candidateResults = []; },
+   closeScheduleModal: (state) => {
+  console.trace('🔴 closeScheduleModal CALLED FROM:');
+  state.scheduleModalOpen = false;
+  state.candidateResults = [];
+},
 
     openRescheduleModal: (state, action) => { state.rescheduleTarget = action.payload; },
     closeRescheduleModal: (state) => { state.rescheduleTarget = null; state.rescheduleRequest = null; },

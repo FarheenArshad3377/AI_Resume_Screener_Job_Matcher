@@ -566,3 +566,14 @@
     color: var(--rp-text-muted);
     text-align: center;
 }
+.rp-resume-panel {
+    position: sticky;
+    top: 1rem;
+    overflow: hidden;
+}
+.rp-resume-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    background: #fff;
+}

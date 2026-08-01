@@ -15,50 +15,78 @@ namespace ResumeScreener.Api.Services
             _context = context;
         }
 
-        public async Task<PagedResult<JobListItemDto>> GetJobsAsync(string? status, int pageNumber, int pageSize, int? recruiterId = null)
+        public async Task<PagedResult<JobListItemDto>> GetJobsAsync(
+            string? status, int pageNumber, int pageSize, int? recruiterId = null,
+            string? q = null, string? location = null, string? jobType = null,
+            string? experience = null, string? sortBy = null)
         {
+            var query = _context.Jobs.AsQueryable();
+
+            if (!string.IsNullOrEmpty(status) && status != "All")
             {
-                var query = _context.Jobs.AsQueryable();
-
-                if (!string.IsNullOrEmpty(status) && status != "All")
-                {
-                    query = query.Where(j => j.Status == status);
-                }
-
-                if (recruiterId.HasValue)
-                {
-                    query = query.Where(j => j.RecruiterId == recruiterId.Value);
-                }
-
-                query = query.OrderByDescending(j => j.CreatedAt);
-
-                var totalCount = await query.CountAsync();
-
-                var jobs = await query
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(j => new JobListItemDto
-                    {
-                        Id = j.Id,
-                        Title = j.Title,
-                        Department = j.Department,
-                        Description = j.Description,
-                        Location = j.Location,
-                        EmploymentType = j.EmploymentType,
-                        Salary = j.Salary,
-                        Status = j.Status,
-                        CreatedAt = j.CreatedAt
-                    })
-                    .ToListAsync();
-
-                return new PagedResult<JobListItemDto>
-                {
-                    Data = jobs,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
-                    TotalCount = totalCount
-                };
+                query = query.Where(j => j.Status == status);
             }
+
+            if (recruiterId.HasValue)
+            {
+                query = query.Where(j => j.RecruiterId == recruiterId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(j => j.Title.Contains(q) || j.Description.Contains(q));
+            }
+
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                var locations = location.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                query = query.Where(j => locations.Any(loc => j.Location.Contains(loc)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(jobType))
+            {
+                var types = jobType.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                query = query.Where(j => types.Contains(j.EmploymentType));
+            }
+
+            if (!string.IsNullOrWhiteSpace(experience) && experience != "Any Experience")
+            {
+                query = query.Where(j => j.ExperienceLevel == experience);
+            }
+            query = sortBy switch
+            {
+                "Salary High to Low" => query.OrderByDescending(j => j.Salary),
+                "Salary Low to High" => query.OrderBy(j => j.Salary),
+                "Most Relevant" => query.OrderByDescending(j => j.CreatedAt), // placeholder, real relevance scoring nahi hai
+                _ => query.OrderByDescending(j => j.CreatedAt) // "Newest First" default
+            };
+
+            var totalCount = await query.CountAsync();
+
+            var jobs = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(j => new JobListItemDto
+                {
+                    Id = j.Id,
+                    Title = j.Title,
+                    Department = j.Department,
+                    Description = j.Description,
+                    Location = j.Location,
+                    EmploymentType = j.EmploymentType,
+                    Salary = j.Salary,
+                    Status = j.Status,
+                    CreatedAt = j.CreatedAt
+                })
+                .ToListAsync();
+
+            return new PagedResult<JobListItemDto>
+            {
+                Data = jobs,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<Job> GetJobByIdAsync(int id)

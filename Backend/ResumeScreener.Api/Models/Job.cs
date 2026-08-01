@@ -11,7 +11,8 @@ namespace ResumeScreener.Api.Models
         [Required]
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
-
+        [MaxLength(30)]
+        public string? ExperienceLevel { get; set; } // "Entry Level", "Mid Level", "Senior Level"
         [Required]
         public string Description { get; set; } = string.Empty;
 

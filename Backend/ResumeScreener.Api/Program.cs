@@ -130,7 +130,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
 var app = builder.Build();
+app.UseDeveloperExceptionPage(); // 👈 TEMPORARY — sirf debug ke liye, baad mein hata denge
+
 // Global error handling 
 app.UseMiddleware<ResumeScreener.Api.Middleware.GlobalExceptionMiddleware>();
 // Configure Middleware Pipeline
@@ -142,7 +145,13 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseCors("AllowReactFrontend");
-
+// 👇 YE ADD KARO — UploadedResumes folder ko static files ke tor pe serve karo
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "UploadedResumes")),
+    RequestPath = "/UploadedResumes"
+});
 // app.UseHttpsRedirection(); // Disabled for dev
 
 app.UseAuthentication();

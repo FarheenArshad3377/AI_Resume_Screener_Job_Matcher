@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ResumeScreener.Api.Data;
 using ResumeScreener.Api.DTOs;
 using ResumeScreener.Api.Models;
+using ResumeScreener.Api.Services;
 using System.Security.Claims;
 
 namespace ResumeScreener.Api.Controllers
@@ -15,11 +16,13 @@ namespace ResumeScreener.Api.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public RecruiterCandidatesController(ApplicationDbContext context)
+        private readonly ICandidateService _candidateService;
+
+        public RecruiterCandidatesController(ApplicationDbContext context, ICandidateService candidateService)
         {
             _context = context;
+            _candidateService = candidateService;
         }
-
         private int? GetUserId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -90,7 +93,9 @@ namespace ResumeScreener.Api.Controllers
                     appliedDate = a.CreatedAt,
                     matchScore = a.MatchScore ?? 0,
                     status = a.Status,
-                    resumeUrl = $"/api/candidates/{a.CandidateId}/resume",
+                    resumeUrl = !string.IsNullOrEmpty(a.Candidate.ResumeFilePath)
+                    ? $"/UploadedResumes/{Path.GetFileName(a.Candidate.ResumeFilePath)}"
+                    : null,
                     profileUrl = $"/api/recruiter/candidates/{a.CandidateId}",
                     matchedSkills = a.MatchedSkills,
                     missingSkills = a.MissingSkills,
@@ -105,7 +110,7 @@ namespace ResumeScreener.Api.Controllers
                 Data = new { items, totalCount }
             });
         }
-
+       
         // PUT: api/recruiter/jobs/{jobId}/candidates/{candidateId}/status
         [HttpPut("jobs/{jobId}/candidates/{candidateId}/status")]
         public async Task<IActionResult> UpdateStatus(int jobId, int candidateId, [FromBody] UpdateStatusDto dto)
@@ -227,7 +232,9 @@ namespace ResumeScreener.Api.Controllers
                     appliedDate = a.CreatedAt,
                     status = a.Status,
                     profileImage = (string?)null,
-                    resume = $"/api/candidates/{a.CandidateId}/resume"
+                    resume = !string.IsNullOrEmpty(a.Candidate.ResumeFilePath)
+                    ? $"/UploadedResumes/{Path.GetFileName(a.Candidate.ResumeFilePath)}"
+                    : null
                 })
                 .ToListAsync();
 
@@ -240,7 +247,7 @@ namespace ResumeScreener.Api.Controllers
         }
 
         // GET: api/recruiter/candidates/{candidateId}
-        [HttpGet("candidates/{candidateId}")]
+        [HttpGet("candidates/{candidateId:int}")]
         public async Task<IActionResult> GetCandidateProfile(int candidateId)
         {
             var recruiterId = GetUserId();
@@ -299,7 +306,9 @@ namespace ResumeScreener.Api.Controllers
                     id = candidate.Id,
                     name = candidate.Name,
                     email = candidate.Email,
-                    resumeUrl = $"/api/candidates/{candidate.Id}/resume",
+                    resumeUrl = !string.IsNullOrEmpty(candidate.ResumeFilePath)
+                    ? $"/UploadedResumes/{Path.GetFileName(candidate.ResumeFilePath)}"
+                    : null,
                     parsedText = candidate.ParsedText,
                     applications,
                     notes
