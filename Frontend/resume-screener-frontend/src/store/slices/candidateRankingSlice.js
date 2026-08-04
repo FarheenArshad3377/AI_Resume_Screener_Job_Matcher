@@ -1,15 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import candidateRankingAPI from '../../api/candidateRankingAPI.js';
 
+const CACHE_DURATION = 2 * 60 * 1000; // 2 min — ranking data jaldi stale ho sakta hai
+
 export const fetchJobCandidates = createAsyncThunk(
   'candidateRanking/fetchJobCandidates',
   async ({ jobId, params }, { rejectWithValue }) => {
     try {
-      const data = await candidateRankingAPI.getJobCandidates(jobId, params);
-      return data;
+      return await candidateRankingAPI.getJobCandidates(jobId, params);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
+  },
+  {
+    condition: ({ jobId }, { getState }) => {
+      const { candidateRanking } = getState();
+      const isFresh =
+        candidateRanking.currentJobId === jobId &&
+        candidateRanking.lastFetched &&
+        Date.now() - candidateRanking.lastFetched < CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -17,20 +28,20 @@ export const rankCandidates = createAsyncThunk(
   'candidateRanking/rankCandidates',
   async (jobId, { rejectWithValue }) => {
     try {
-      const data = await candidateRankingAPI.rankCandidates(jobId);
-      return data;
+      return await candidateRankingAPI.rankCandidates(jobId);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
+  // Condition nahi lagai — "Rank Candidates" button user khud dabata hai,
+  // explicitly fresh data chahiye, cache se skip nahi karna
 );
 
 export const updateCandidateStatus = createAsyncThunk(
   'candidateRanking/updateCandidateStatus',
   async ({ jobId, candidateId, status }, { rejectWithValue }) => {
     try {
-      const data = await candidateRankingAPI.updateCandidateStatus(jobId, candidateId, status);
-      return data;
+      return await candidateRankingAPI.updateCandidateStatus(jobId, candidateId, status);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -41,8 +52,7 @@ export const exportCandidatesCSV = createAsyncThunk(
   'candidateRanking/exportCandidatesCSV',
   async (jobId, { rejectWithValue }) => {
     try {
-      const blob = await candidateRankingAPI.exportCandidatesCSV(jobId);
-      return blob;
+      return await candidateRankingAPI.exportCandidatesCSV(jobId);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -63,6 +73,8 @@ export const downloadResume = createAsyncThunk(
 
 const initialState = {
   candidates: [],
+  currentJobId: null,
+  lastFetched: null,
   loading: false,
   error: null,
   success: false,
@@ -82,10 +94,15 @@ const candidateRankingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchJobCandidates.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchJobCandidates.pending, (state, action) => {
+        state.loading = true;
+        state.error = null;
+        state.currentJobId = action.meta.arg.jobId;
+      })
       .addCase(fetchJobCandidates.fulfilled, (state, action) => {
         state.loading = false;
         state.candidates = action.payload.data || action.payload;
+        state.lastFetched = Date.now();
       })
       .addCase(fetchJobCandidates.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
@@ -94,6 +111,7 @@ const candidateRankingSlice = createSlice({
         state.rankingInProgress = false;
         state.candidates = action.payload.data || action.payload;
         state.success = true;
+        state.lastFetched = Date.now(); // fresh ranking hui, cache timestamp update
       })
       .addCase(rankCandidates.rejected, (state, action) => { state.rankingInProgress = false; state.error = action.payload; })
 
@@ -106,10 +124,10 @@ const candidateRankingSlice = createSlice({
       })
       .addCase(updateCandidateStatus.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
-      .addCase(exportCandidatesCSV.fulfilled, (state) => { /* handled in UI */ })
+      .addCase(exportCandidatesCSV.fulfilled, () => { /* handled in UI */ })
       .addCase(exportCandidatesCSV.rejected, (state, action) => { state.error = action.payload; })
 
-      .addCase(downloadResume.fulfilled, (state) => { /* handled in UI */ })
+      .addCase(downloadResume.fulfilled, () => { /* handled in UI */ })
       .addCase(downloadResume.rejected, (state, action) => { state.error = action.payload; });
   }
 });

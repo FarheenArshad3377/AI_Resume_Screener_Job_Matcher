@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import companyProfileAPI from '../../api/companyProfileApi.js';
 
+const CACHE_DURATION = 5 * 60 * 1000; // 5 min — profile kam badalta hai
+
 export const fetchCompanyProfile = createAsyncThunk(
   'companyProfile/fetchCompanyProfile',
   async (_, { rejectWithValue }) => {
@@ -9,6 +11,16 @@ export const fetchCompanyProfile = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch profile');
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { companyProfile } = getState();
+      const isFresh =
+        companyProfile.profile &&
+        companyProfile.lastFetched &&
+        Date.now() - companyProfile.lastFetched < CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -41,7 +53,8 @@ const initialState = {
   error: null,
   success: false,
   successMessage: '',
-  isEditing: false
+  isEditing: false,
+  lastFetched: null,
 };
 
 const companyProfileSlice = createSlice({
@@ -61,6 +74,7 @@ const companyProfileSlice = createSlice({
       .addCase(fetchCompanyProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.profile = action.payload?.data ?? action.payload;
+        state.lastFetched = Date.now();
       })
       .addCase(fetchCompanyProfile.rejected, (state, action) => {
         state.loading = false;
@@ -77,6 +91,7 @@ const companyProfileSlice = createSlice({
         state.successMessage = 'Profile updated successfully';
         state.profile = action.payload?.data ?? action.payload;
         state.isEditing = false;
+        state.lastFetched = Date.now(); // naya data already fresh hai, cache renew
       })
       .addCase(updateCompanyProfile.rejected, (state, action) => {
         state.saving = false;

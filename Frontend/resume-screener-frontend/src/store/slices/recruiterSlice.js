@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import recruiterAPI from '../../api/recruiterAPI.js';
 
-// Async thunks
+const CACHE_DURATION = 3 * 60 * 1000; // 3 min
+
 export const fetchRecruiterDashboard = createAsyncThunk(
     'recruiter/fetchDashboard',
     async (_, { rejectWithValue }) => {
@@ -11,17 +12,19 @@ export const fetchRecruiterDashboard = createAsyncThunk(
                 recruiterAPI.getDashboardStats(),
                 recruiterAPI.getRecentCandidates()
             ]);
-
-            return {
-                jobs: jobsData,
-                stats: statsData,
-                recentCandidates: candidatesData
-            };
+            return { jobs: jobsData, stats: statsData, recentCandidates: candidatesData };
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || error.message || 'Failed to fetch dashboard'
-            );
+            return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch dashboard');
         }
+    },
+    {
+        condition: (_, { getState }) => {
+            const { recruiter } = getState();
+            const isFresh =
+                recruiter.lastFetched &&
+                Date.now() - recruiter.lastFetched < CACHE_DURATION;
+            return !isFresh;
+        },
     }
 );
 
@@ -29,13 +32,20 @@ export const fetchJobById = createAsyncThunk(
     'recruiter/fetchJobById',
     async (jobId, { rejectWithValue }) => {
         try {
-            const job = await recruiterAPI.getJobById(jobId);
-            return job;
+            return await recruiterAPI.getJobById(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to fetch job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch job');
         }
+    },
+    {
+        condition: (jobId, { getState }) => {
+            const { recruiter } = getState();
+            const isFresh =
+                recruiter.currentJob?.id === jobId &&
+                recruiter.currentJobFetched &&
+                Date.now() - recruiter.currentJobFetched < CACHE_DURATION;
+            return !isFresh;
+        },
     }
 );
 
@@ -43,13 +53,20 @@ export const fetchJobCandidates = createAsyncThunk(
     'recruiter/fetchJobCandidates',
     async (jobId, { rejectWithValue }) => {
         try {
-            const candidates = await recruiterAPI.getJobCandidates(jobId);
-            return candidates;
+            return await recruiterAPI.getJobCandidates(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to fetch candidates'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch candidates');
         }
+    },
+    {
+        condition: (jobId, { getState }) => {
+            const { recruiter } = getState();
+            const isFresh =
+                recruiter.currentCandidatesJobId === jobId &&
+                recruiter.currentCandidatesFetched &&
+                Date.now() - recruiter.currentCandidatesFetched < CACHE_DURATION;
+            return !isFresh;
+        },
     }
 );
 
@@ -57,12 +74,9 @@ export const fetchCandidateProfile = createAsyncThunk(
     'recruiter/fetchCandidateProfile',
     async (candidateId, { rejectWithValue }) => {
         try {
-            const candidate = await recruiterAPI.getCandidateProfile(candidateId);
-            return candidate;
+            return await recruiterAPI.getCandidateProfile(candidateId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to fetch candidate profile'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch candidate profile');
         }
     }
 );
@@ -71,12 +85,9 @@ export const createJob = createAsyncThunk(
     'recruiter/createJob',
     async (jobData, { rejectWithValue }) => {
         try {
-            const newJob = await recruiterAPI.createJob(jobData);
-            return newJob;
+            return await recruiterAPI.createJob(jobData);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to create job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to create job');
         }
     }
 );
@@ -85,12 +96,9 @@ export const updateJob = createAsyncThunk(
     'recruiter/updateJob',
     async ({ jobId, jobData }, { rejectWithValue }) => {
         try {
-            const updatedJob = await recruiterAPI.updateJob(jobId, jobData);
-            return updatedJob;
+            return await recruiterAPI.updateJob(jobId, jobData);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to update job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to update job');
         }
     }
 );
@@ -102,9 +110,7 @@ export const deleteJob = createAsyncThunk(
             await recruiterAPI.deleteJob(jobId);
             return jobId;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to delete job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete job');
         }
     }
 );
@@ -113,32 +119,25 @@ export const publishJob = createAsyncThunk(
     'recruiter/publishJob',
     async (jobId, { rejectWithValue }) => {
         try {
-            const publishedJob = await recruiterAPI.publishJob(jobId);
-            return publishedJob;
+            return await recruiterAPI.publishJob(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to publish job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to publish job');
         }
     }
 );
 
 export const updateCandidateStatus = createAsyncThunk(
     'recruiter/updateCandidateStatus',
-    async ({ jobId, applicationId, status }, { rejectWithValue }) => {   // 👈 changed
+    async ({ jobId, applicationId, status }, { rejectWithValue }) => {
         try {
-            const updatedCandidate = await recruiterAPI.updateCandidateStatus(jobId, applicationId, status);
-            return updatedCandidate;
+            return await recruiterAPI.updateCandidateStatus(jobId, applicationId, status);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to update candidate status'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to update candidate status');
         }
     }
 );
 
 const initialState = {
-    // Dashboard data
     jobs: [],
     stats: {
         totalJobs: 0,
@@ -147,19 +146,20 @@ const initialState = {
         pendingReview: 0
     },
     recentCandidates: [],
+    lastFetched: null, // NEW: dashboard cache
 
-    // Current items
     currentJob: null,
+    currentJobFetched: null, // NEW
     currentCandidates: [],
+    currentCandidatesJobId: null,   // NEW
+    currentCandidatesFetched: null, // NEW
     currentCandidate: null,
 
-    // UI state
     loading: false,
     error: null,
     success: false,
     successMessage: '',
 
-    // Filters
     filter: {
         status: 'All',
         department: 'All',
@@ -172,10 +172,7 @@ const recruiterSlice = createSlice({
     initialState,
     reducers: {
         setFilter: (state, action) => {
-            state.filter = {
-                ...state.filter,
-                ...action.payload
-            };
+            state.filter = { ...state.filter, ...action.payload };
         },
         clearError: (state) => {
             state.error = null;
@@ -192,7 +189,6 @@ const recruiterSlice = createSlice({
         }
     },
     extraReducers: (builder) => {
-        // Fetch Dashboard
         builder
             .addCase(fetchRecruiterDashboard.pending, (state) => {
                 state.loading = true;
@@ -203,13 +199,13 @@ const recruiterSlice = createSlice({
                 state.jobs = action.payload.jobs;
                 state.stats = action.payload.stats;
                 state.recentCandidates = action.payload.recentCandidates;
+                state.lastFetched = Date.now(); // NEW
             })
             .addCase(fetchRecruiterDashboard.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Fetch Job By ID
         builder
             .addCase(fetchJobById.pending, (state) => {
                 state.loading = true;
@@ -218,28 +214,29 @@ const recruiterSlice = createSlice({
             .addCase(fetchJobById.fulfilled, (state, action) => {
                 state.loading = false;
                 state.currentJob = action.payload;
+                state.currentJobFetched = Date.now(); // NEW
             })
             .addCase(fetchJobById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Fetch Job Candidates
         builder
-            .addCase(fetchJobCandidates.pending, (state) => {
+            .addCase(fetchJobCandidates.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
+                state.currentCandidatesJobId = action.meta.arg; // NEW
             })
             .addCase(fetchJobCandidates.fulfilled, (state, action) => {
                 state.loading = false;
                 state.currentCandidates = action.payload;
+                state.currentCandidatesFetched = Date.now(); // NEW
             })
             .addCase(fetchJobCandidates.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Fetch Candidate Profile
         builder
             .addCase(fetchCandidateProfile.pending, (state) => {
                 state.loading = true;
@@ -254,7 +251,6 @@ const recruiterSlice = createSlice({
                 state.error = action.payload;
             });
 
-        // Create Job
         builder
             .addCase(createJob.pending, (state) => {
                 state.loading = true;
@@ -265,13 +261,13 @@ const recruiterSlice = createSlice({
                 state.jobs.push(action.payload);
                 state.success = true;
                 state.successMessage = 'Job created successfully';
+                state.lastFetched = null; // NEW: dashboard cache invalidate
             })
             .addCase(createJob.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Update Job
         builder
             .addCase(updateJob.pending, (state) => {
                 state.loading = true;
@@ -288,13 +284,13 @@ const recruiterSlice = createSlice({
                 }
                 state.success = true;
                 state.successMessage = 'Job updated successfully';
+                state.lastFetched = null; // NEW
             })
             .addCase(updateJob.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Delete Job
         builder
             .addCase(deleteJob.pending, (state) => {
                 state.loading = true;
@@ -305,13 +301,13 @@ const recruiterSlice = createSlice({
                 state.jobs = state.jobs.filter(job => job.id !== action.payload);
                 state.success = true;
                 state.successMessage = 'Job deleted successfully';
+                state.lastFetched = null; // NEW
             })
             .addCase(deleteJob.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Publish Job
         builder
             .addCase(publishJob.pending, (state) => {
                 state.loading = true;
@@ -328,13 +324,13 @@ const recruiterSlice = createSlice({
                 }
                 state.success = true;
                 state.successMessage = 'Job published successfully';
+                state.lastFetched = null; // NEW
             })
             .addCase(publishJob.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Update Candidate Status
         builder
             .addCase(updateCandidateStatus.pending, (state) => {
                 state.loading = true;
@@ -347,6 +343,7 @@ const recruiterSlice = createSlice({
                 }
                 state.success = true;
                 state.successMessage = 'Candidate status updated';
+                state.currentCandidatesFetched = null; // NEW: candidates list cache invalidate
             })
             .addCase(updateCandidateStatus.rejected, (state, action) => {
                 state.loading = false;

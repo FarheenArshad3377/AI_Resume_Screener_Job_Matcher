@@ -1,18 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import jobDetailAPI from '../../api/jobDetailAPI.js';
 
-// Async thunks
+const CACHE_DURATION = 3 * 60 * 1000; // 3 min
+
 export const fetchJobDetails = createAsyncThunk(
     'jobDetail/fetchJobDetails',
     async (jobId, { rejectWithValue }) => {
         try {
-            const jobDetails = await jobDetailAPI.getJobDetails(jobId);
-            return jobDetails;
+            return await jobDetailAPI.getJobDetails(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to fetch job details'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch job details');
         }
+    },
+    {
+        condition: (jobId, { getState }) => {
+            const { jobDetail } = getState();
+            const isFresh =
+                jobDetail.job?.id === jobId &&
+                jobDetail.lastFetched &&
+                Date.now() - jobDetail.lastFetched < CACHE_DURATION;
+            return !isFresh;
+        },
     }
 );
 
@@ -20,26 +28,21 @@ export const fetchJobStats = createAsyncThunk(
     'jobDetail/fetchJobStats',
     async (jobId, { rejectWithValue }) => {
         try {
-            const stats = await jobDetailAPI.getJobStats(jobId);
-            return stats;
+            return await jobDetailAPI.getJobStats(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to fetch job stats'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch job stats');
         }
     }
+    // Stats badalte rehte hain (naye applications aa sakte hain), cache nahi lagayi
 );
 
 export const closeJob = createAsyncThunk(
     'jobDetail/closeJob',
     async (jobId, { rejectWithValue }) => {
         try {
-            const result = await jobDetailAPI.closeJob(jobId);
-            return result;
+            return await jobDetailAPI.closeJob(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to close job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to close job');
         }
     }
 );
@@ -48,12 +51,9 @@ export const reopenJob = createAsyncThunk(
     'jobDetail/reopenJob',
     async (jobId, { rejectWithValue }) => {
         try {
-            const result = await jobDetailAPI.reopenJob(jobId);
-            return result;
+            return await jobDetailAPI.reopenJob(jobId);
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to reopen job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to reopen job');
         }
     }
 );
@@ -65,9 +65,7 @@ export const deleteJob = createAsyncThunk(
             await jobDetailAPI.deleteJob(jobId);
             return jobId;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to delete job'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete job');
         }
     }
 );
@@ -83,23 +81,18 @@ const initialState = {
     loading: false,
     error: null,
     success: false,
-    successMessage: ''
+    successMessage: '',
+    lastFetched: null // NEW
 };
 
 const jobDetailSlice = createSlice({
     name: 'jobDetail',
     initialState,
     reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
-        clearSuccess: (state) => {
-            state.success = false;
-            state.successMessage = '';
-        }
+        clearError: (state) => { state.error = null; },
+        clearSuccess: (state) => { state.success = false; state.successMessage = ''; }
     },
     extraReducers: (builder) => {
-        // Fetch Job Details
         builder
             .addCase(fetchJobDetails.pending, (state) => {
                 state.loading = true;
@@ -108,13 +101,13 @@ const jobDetailSlice = createSlice({
             .addCase(fetchJobDetails.fulfilled, (state, action) => {
                 state.loading = false;
                 state.job = action.payload;
+                state.lastFetched = Date.now(); // NEW
             })
             .addCase(fetchJobDetails.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
 
-        // Fetch Job Stats
         builder
             .addCase(fetchJobStats.pending, (state) => {
                 state.loading = true;
@@ -128,13 +121,12 @@ const jobDetailSlice = createSlice({
                 state.error = action.payload;
             });
 
-        // Close Job
         builder
             .addCase(closeJob.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(closeJob.fulfilled, (state, action) => {
+            .addCase(closeJob.fulfilled, (state) => {
                 state.loading = false;
                 if (state.job) {
                     state.job.status = 'Closed';
@@ -147,13 +139,12 @@ const jobDetailSlice = createSlice({
                 state.error = action.payload;
             });
 
-        // Reopen Job
         builder
             .addCase(reopenJob.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(reopenJob.fulfilled, (state, action) => {
+            .addCase(reopenJob.fulfilled, (state) => {
                 state.loading = false;
                 if (state.job) {
                     state.job.status = 'Open';
@@ -166,7 +157,6 @@ const jobDetailSlice = createSlice({
                 state.error = action.payload;
             });
 
-        // Delete Job
         builder
             .addCase(deleteJob.pending, (state) => {
                 state.loading = true;

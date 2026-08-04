@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import recruiterInterviewAPI from '../../api/recruiterInterviewApi.js';
 
+const CACHE_DURATION = 2 * 60 * 1000;      // 2 min — interviews list
+const DROPDOWN_CACHE_DURATION = 5 * 60 * 1000; // 5 min — jobs/team dropdowns
+
 export const fetchInterviews = createAsyncThunk(
   'recruiterInterview/fetchInterviews',
   async (params, { rejectWithValue }) => {
@@ -9,6 +12,17 @@ export const fetchInterviews = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch interviews');
     }
+  },
+  {
+    condition: (params, { getState }) => {
+      const { recruiterInterview } = getState();
+      const key = JSON.stringify(params ?? {});
+      const isFresh =
+        recruiterInterview.lastQueryKey === key &&
+        recruiterInterview.lastFetched &&
+        Date.now() - recruiterInterview.lastFetched < CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -74,7 +88,7 @@ export const fetchFeedback = createAsyncThunk(
     try {
       return await recruiterInterviewAPI.getFeedback(interviewId);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || null); // 404 = no feedback yet, not a real error
+      return rejectWithValue(err.response?.data?.message || null);
     }
   }
 );
@@ -99,6 +113,7 @@ export const searchCandidates = createAsyncThunk(
       return rejectWithValue(err.response?.data?.message || 'Failed to search candidates');
     }
   }
+  // Live search — cache nahi lagai, har keystroke fresh result chahiye
 );
 
 export const fetchActiveJobs = createAsyncThunk(
@@ -109,6 +124,16 @@ export const fetchActiveJobs = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch jobs');
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { recruiterInterview } = getState();
+      const isFresh =
+        recruiterInterview.activeJobs.length > 0 &&
+        recruiterInterview.activeJobsFetched &&
+        Date.now() - recruiterInterview.activeJobsFetched < DROPDOWN_CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -120,6 +145,16 @@ export const fetchTeamMembers = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch team members');
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { recruiterInterview } = getState();
+      const isFresh =
+        recruiterInterview.teamMembers.length > 0 &&
+        recruiterInterview.teamMembersFetched &&
+        Date.now() - recruiterInterview.teamMembersFetched < DROPDOWN_CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -134,6 +169,9 @@ const initialState = {
   success: false,
   successMessage: '',
 
+  lastQueryKey: null, // NEW
+  lastFetched: null,  // NEW
+
   filters: {
     search: '',
     jobId: 'All',
@@ -142,7 +180,6 @@ const initialState = {
     dateTo: null
   },
 
-  // Modal state
   scheduleModalOpen: false,
   rescheduleTarget: null,
   rescheduleRequest: null,
@@ -150,10 +187,11 @@ const initialState = {
   feedbackData: null,
   feedbackLoading: false,
 
-  // Dropdown data
   candidateResults: [],
   activeJobs: [],
-  teamMembers: []
+  activeJobsFetched: null, // NEW
+  teamMembers: [],
+  teamMembersFetched: null // NEW
 };
 
 const recruiterInterviewSlice = createSlice({
@@ -169,11 +207,10 @@ const recruiterInterviewSlice = createSlice({
     setPage: (state, action) => { state.page = action.payload; },
 
     openScheduleModal: (state) => { state.scheduleModalOpen = true; },
-   closeScheduleModal: (state) => {
-  console.trace('🔴 closeScheduleModal CALLED FROM:');
-  state.scheduleModalOpen = false;
-  state.candidateResults = [];
-},
+    closeScheduleModal: (state) => {
+      state.scheduleModalOpen = false;
+      state.candidateResults = [];
+    },
 
     openRescheduleModal: (state, action) => { state.rescheduleTarget = action.payload; },
     closeRescheduleModal: (state) => { state.rescheduleTarget = null; state.rescheduleRequest = null; },
@@ -183,9 +220,10 @@ const recruiterInterviewSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchInterviews.pending, (state) => {
+      .addCase(fetchInterviews.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.lastQueryKey = JSON.stringify(action.meta.arg ?? {}); // NEW
       })
       .addCase(fetchInterviews.fulfilled, (state, action) => {
         state.loading = false;
@@ -193,7 +231,8 @@ const recruiterInterviewSlice = createSlice({
         state.interviews = payload?.interviews ?? [];
         state.stats = payload?.stats ?? state.stats;
         state.totalCount = payload?.totalCount ?? state.interviews.length;
-       })
+        state.lastFetched = Date.now(); // NEW
+      })
       .addCase(fetchInterviews.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -209,13 +248,14 @@ const recruiterInterviewSlice = createSlice({
         state.scheduleModalOpen = false;
         const created = action.payload?.data ?? action.payload;
         state.interviews = [created, ...state.interviews];
+        state.lastFetched = null; // NEW: invalidate
       })
       .addCase(scheduleInterview.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-     .addCase(fetchRescheduleRequest.fulfilled, (state, action) => {
+      .addCase(fetchRescheduleRequest.fulfilled, (state, action) => {
         state.rescheduleRequest = action.payload.data?.data ?? action.payload.data;
       })
 
@@ -231,8 +271,9 @@ const recruiterInterviewSlice = createSlice({
         const updated = action.payload?.data ?? action.payload;
         state.interviews = state.interviews.map((iv) =>
           iv.id === updated.id ? { ...iv, ...updated } : iv
-  );
-})
+        );
+        state.lastFetched = null; // NEW: invalidate
+      })
       .addCase(confirmReschedule.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -245,7 +286,8 @@ const recruiterInterviewSlice = createSlice({
         );
         state.success = true;
         state.successMessage = 'Interview cancelled';
-})
+        state.lastFetched = null; // NEW: invalidate
+      })
       .addCase(cancelInterview.rejected, (state, action) => {
         state.error = action.payload;
       })
@@ -279,7 +321,7 @@ const recruiterInterviewSlice = createSlice({
       })
       .addCase(fetchFeedback.rejected, (state) => {
         state.feedbackLoading = false;
-        state.feedbackData = null; // no feedback yet — not treated as error
+        state.feedbackData = null;
       })
 
       .addCase(sendReminder.fulfilled, (state) => {
@@ -295,12 +337,14 @@ const recruiterInterviewSlice = createSlice({
       .addCase(fetchActiveJobs.fulfilled, (state, action) => {
         const list = action.payload?.data ?? action.payload;
         state.activeJobs = Array.isArray(list) ? list : [];
+        state.activeJobsFetched = Date.now(); // NEW
       })
 
       .addCase(fetchTeamMembers.fulfilled, (state, action) => {
         const list = action.payload?.data ?? action.payload;
         state.teamMembers = Array.isArray(list) ? list : [];
-      })
+        state.teamMembersFetched = Date.now(); // NEW
+      });
   }
 });
 

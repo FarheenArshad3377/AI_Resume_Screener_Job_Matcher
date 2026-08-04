@@ -1,15 +1,27 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import candidateProfileAPI from '../../api/candidateProfileAPI.js';
 
+const CACHE_DURATION = 3 * 60 * 1000; // 3 min
+
 export const fetchCandidateProfile = createAsyncThunk(
   'candidateProfile/fetchCandidateProfile',
   async (candidateId, { rejectWithValue }) => {
     try {
-      const data = await candidateProfileAPI.getCandidateProfile(candidateId);
-      return data;
+      return await candidateProfileAPI.getCandidateProfile(candidateId);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
+  },
+  {
+    // Agar wahi candidate already fresh cached hai to call skip
+    condition: (candidateId, { getState }) => {
+      const { candidateProfile } = getState();
+      const isFresh =
+        candidateProfile.candidate?.id === candidateId &&
+        candidateProfile.lastFetched &&
+        Date.now() - candidateProfile.lastFetched < CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -17,20 +29,19 @@ export const fetchCandidateApplications = createAsyncThunk(
   'candidateProfile/fetchCandidateApplications',
   async ({ candidateId, params }, { rejectWithValue }) => {
     try {
-      const data = await candidateProfileAPI.getCandidateApplications(candidateId, params);
-      return data;
+      return await candidateProfileAPI.getCandidateApplications(candidateId, params);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
+  // Isme caching nahi lagai — params (filters) baar baar badalte hain
 );
 
 export const updateCandidateStatus = createAsyncThunk(
   'candidateProfile/updateCandidateStatus',
   async ({ candidateId, status }, { rejectWithValue }) => {
     try {
-      const data = await candidateProfileAPI.updateCandidateStatus(candidateId, status);
-      return data;
+      return await candidateProfileAPI.updateCandidateStatus(candidateId, status);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -41,8 +52,7 @@ export const addCandidateNote = createAsyncThunk(
   'candidateProfile/addCandidateNote',
   async ({ candidateId, note }, { rejectWithValue }) => {
     try {
-      const data = await candidateProfileAPI.addNote(candidateId, note);
-      return data;
+      return await candidateProfileAPI.addNote(candidateId, note);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -67,7 +77,8 @@ const initialState = {
   notes: [],
   loading: false,
   error: null,
-  success: false
+  success: false,
+  lastFetched: null,
 };
 
 const candidateProfileSlice = createSlice({
@@ -86,6 +97,7 @@ const candidateProfileSlice = createSlice({
       .addCase(fetchCandidateProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.candidate = action.payload.data ?? action.payload;
+        state.lastFetched = Date.now();
       })
       .addCase(fetchCandidateProfile.rejected, (state, action) => {
         state.loading = false;
@@ -119,6 +131,7 @@ const candidateProfileSlice = createSlice({
         state.applications = state.applications.map(app =>
           app.id === (updated.applicationId || updated.id) ? { ...app, status: updated.status } : app
         );
+        state.lastFetched = null; // status badla, cache invalidate
       })
       .addCase(updateCandidateStatus.rejected, (state, action) => {
         state.loading = false;

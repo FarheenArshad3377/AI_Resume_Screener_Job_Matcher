@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import interviewAPI from '../../api/interviewApi.js';
 
+const CACHE_DURATION = 2 * 60 * 1000; // 2 min
+
 export const fetchMyInterviews = createAsyncThunk(
   'interview/fetchMyInterviews',
   async (params, { rejectWithValue }) => {
@@ -9,6 +11,17 @@ export const fetchMyInterviews = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch interviews');
     }
+  },
+  {
+    condition: (params, { getState }) => {
+      const { interview } = getState();
+      const key = JSON.stringify(params ?? {});
+      const isFresh =
+        interview.lastQueryKey === key &&
+        interview.lastFetched &&
+        Date.now() - interview.lastFetched < CACHE_DURATION;
+      return !isFresh;
+    },
   }
 );
 
@@ -63,10 +76,12 @@ const initialState = {
   success: false,
   successMessage: '',
 
-  // Modal-driven state
-  selectedInterview: null,   // details modal
-  rescheduleTarget: null,    // reschedule modal
-  feedbackData: null,        // feedback modal
+  lastQueryKey: null, // NEW
+  lastFetched: null,  // NEW
+
+  selectedInterview: null,
+  rescheduleTarget: null,
+  feedbackData: null,
   feedbackLoading: false
 };
 
@@ -84,15 +99,16 @@ const interviewSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchMyInterviews.pending, (state) => {
+      .addCase(fetchMyInterviews.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.lastQueryKey = JSON.stringify(action.meta.arg ?? {}); // NEW
       })
-     // interviewSlice.js — fetchMyInterviews.fulfilled ke andar
       .addCase(fetchMyInterviews.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
         state.interviews = payload?.data?.data ?? (Array.isArray(payload?.data) ? payload.data : []);
+        state.lastFetched = Date.now(); // NEW
       })
       .addCase(fetchMyInterviews.rejected, (state, action) => {
         state.loading = false;
@@ -111,6 +127,7 @@ const interviewSlice = createSlice({
         state.interviews = state.interviews.map((iv) =>
           iv.id === updated.id ? { ...iv, ...updated } : iv
         );
+        state.lastFetched = null; // NEW: invalidate cache
       })
       .addCase(requestReschedule.rejected, (state, action) => {
         state.loading = false;
@@ -124,6 +141,7 @@ const interviewSlice = createSlice({
         );
         state.success = true;
         state.successMessage = 'Interview cancelled';
+        state.lastFetched = null; // NEW: invalidate cache
       })
       .addCase(cancelInterview.rejected, (state, action) => {
         state.error = action.payload;
