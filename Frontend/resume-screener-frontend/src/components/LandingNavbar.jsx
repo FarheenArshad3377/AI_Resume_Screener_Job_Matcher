@@ -34,11 +34,11 @@ export default function LandingNavbar() {
       </div>
 
       <div className="d-flex align-items-center gap-3">
-        <input
+        {/* <input
           className="rp-search d-none d-md-block"
           type="text"
           placeholder="Search..."
-        />
+        /> */}
         <button
           className="rp-btn-gradient d-none d-sm-inline-flex align-items-center gap-2"
           style={{ padding: "0.55rem 1.25rem", fontSize: "0.85rem" }}
@@ -47,12 +47,12 @@ export default function LandingNavbar() {
           <i className="bi bi-plus-lg" />
           {isRecruiter ? "Post a Job" : "Find a Job"}
         </button>
-        <button className="rp-icon-btn" aria-label="Notifications">
+        {/* <button className="rp-icon-btn" aria-label="Notifications">
           <i className="bi bi-bell" />
         </button>
         <button className="rp-icon-btn" aria-label="Settings">
           <i className="bi bi-gear" />
-        </button>
+        </button> */}
         <img
           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
             user?.fullName || "Guest"

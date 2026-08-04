@@ -67,7 +67,7 @@ export default function RecruiterNavbar({ toggleSidebar }) {
           </ul>
           <div className="ms-3 d-flex align-items-center gap-2">
             <button className="rp-icon-btn position-relative">
-              <i className="bi bi-bell"></i>
+              {/* <i className="bi bi-bell"></i> */}
               <span
                 className="position-absolute badge rounded-pill"
                 style={{ top: -4, right: -4, background: '#f87171', fontSize: '0.6rem' }}
@@ -75,7 +75,9 @@ export default function RecruiterNavbar({ toggleSidebar }) {
                 3
               </span>
             </button>
-            <button className="rp-icon-btn"><i className="bi bi-gear"></i></button>
+         <button className="rp-icon-btn" onClick={() => navigate('/recruiter/settings')}>
+          <i className="bi bi-gear"></i>
+        </button>
 
             <div ref={menuRef} style={{ position: 'relative', zIndex: 2000 }}>
               <button

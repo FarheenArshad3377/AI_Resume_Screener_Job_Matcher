@@ -4,7 +4,9 @@ using ResumeScreener.Api.Data;
 using ResumeScreener.Api.DTOs;
 using ResumeScreener.Api.Models;
 using ResumeScreener.Api.Services;
-
+using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 namespace ResumeScreener.Api.Controllers
 {
     [ApiController]
@@ -97,5 +99,88 @@ namespace ResumeScreener.Api.Controllers
                 ExpiresAt = expiresAt
             });
         }
+
+
+        // PUT: api/auth/change-password
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid token." });
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                return BadRequest(new { message = "Current password is incorrect." });
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password updated successfully." });
         }
+
+        // PUT: api/auth/profile
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<ActionResult<AuthResponse>> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid token." });
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            var emailTaken = await _context.Users
+                .AnyAsync(u => u.Email == request.Email && u.Id != userId);
+
+            if (emailTaken)
+            {
+                return Conflict(new { message = "This email is already in use." });
+            }
+
+            user.FullName = request.FullName;
+            user.Email = request.Email;
+            await _context.SaveChangesAsync();
+
+            return Ok(new AuthResponse
+            {
+                Token = null!,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role,
+                CompanyName = user.CompanyName,
+                ExpiresAt = DateTime.UtcNow
+            });
+        }
+    }
 }

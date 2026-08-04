@@ -224,57 +224,85 @@ export default function MyApplications() {
         </main>
       </div>
 
-      {currentApplication && (
-        <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.7)' }} onClick={handleCloseModal}>
-          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-            <div className="rp-modal-content">
-              <div className="rp-modal-header">
-                <div>
-                  <h5 className="fw-bold mb-1" style={{ color: '#fff' }}>{currentApplication.jobTitle}</h5>
-                  {currentApplication.company && (
-                    <small className="opacity-75" style={{ color: '#fff' }}>
-                      <i className="bi bi-building me-1"></i>{currentApplication.company}
-                    </small>
-                  )}
+  {currentApplication && (
+  <div 
+    className="rp-modal-backdrop" 
+    onClick={handleCloseModal}
+  >
+    <div 
+      className="rp-modal-dialog" 
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="rp-modal-content">
+        {/* Header */}
+        <div className="rp-modal-header">
+          <div>
+            <h5 className="rp-modal-title">{currentApplication.jobTitle}</h5>
+            {currentApplication.company && (
+              <span className="rp-modal-subtitle">
+                <i className="bi bi-building me-1"></i>{currentApplication.company}
+              </span>
+            )}
+          </div>
+          <button 
+            type="button" 
+            className="rp-modal-close-btn" 
+            onClick={handleCloseModal}
+            aria-label="Close"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="rp-modal-body">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <StatusBadge status={currentApplication.status} />
+            {currentApplication.matchScore != null && (
+              <div className="text-end">
+                <div className="rp-score-val">
+                  {currentApplication.matchScore}%
                 </div>
-                <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal}></button>
+                <small className="rp-score-lbl">Match Score</small>
               </div>
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <StatusBadge status={currentApplication.status} />
-                  {currentApplication.matchScore != null && (
-                    <div className="text-end">
-                      <div className="fw-bold" style={{ fontSize: '1.4rem', color: 'var(--rp-accent-2)' }}>
-                        {currentApplication.matchScore}%
-                      </div>
-                      <small style={{ color: 'var(--rp-text-muted)' }}>Match Score</small>
-                    </div>
-                  )}
-                </div>
-                <div className="d-flex align-items-center gap-3 p-2 rounded mb-3" style={{ background: 'var(--rp-surface-2)' }}>
-                  <div className="rp-job-icon" style={{ width: 36, height: 36, fontSize: '1rem' }}>
-                    <i className="bi bi-calendar-event"></i>
-                  </div>
-                  <div>
-                    <small className="d-block" style={{ color: 'var(--rp-text-muted)' }}>Applied On</small>
-                    <span className="fw-semibold small" style={{ color: 'var(--rp-text)' }}>
-                      {new Date(currentApplication.appliedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
-                {currentApplication.status !== 'Withdrawn' && currentApplication.status !== 'Closed' && (
-                  <button className="btn btn-outline-danger w-100 mt-2" onClick={() => { handleWithdraw(currentApplication.id); handleCloseModal(); }}>
-                    Withdraw Application
-                  </button>
-                )}
-              </div>
-              <div className="p-4 pt-0">
-                <button className="rp-btn-outline w-100" onClick={handleCloseModal}>Close</button>
-              </div>
+            )}
+          </div>
+
+          <div className="rp-info-card">
+            <div className="rp-job-icon">
+              <i className="bi bi-calendar-event"></i>
+            </div>
+            <div>
+              <small className="d-block text-muted">Applied On</small>
+              <span className="fw-semibold small text-white">
+                {new Date(currentApplication.appliedDate).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </span>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Footer */}
+        <div className="rp-modal-footer">
+          {/* {currentApplication.status !== 'Withdrawn' && currentApplication.status !== 'Closed' && (
+            <button 
+              className="btn btn-outline-danger w-100" 
+              onClick={() => { handleWithdraw(currentApplication.id); handleCloseModal(); }}
+            >
+              Withdraw Application
+            </button>
+          )} */}
+          {/* <button className="rp-btn-outline w-100" onClick={handleCloseModal}>
+            Close
+          </button> */}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

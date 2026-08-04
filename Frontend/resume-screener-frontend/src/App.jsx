@@ -18,7 +18,9 @@ import RecruiterInterviewsPage from './pages/RecruiterInterviewsPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
 import HomePage from './pages/HomePage';
-
+import Settings from './pages/Settings'; 
+import RecruiterSettings from './pages/RecruiterSettings';
+import CandidateSettings from './pages/CandidateSettings';
 function App() {
   return (
     <BrowserRouter>
@@ -46,6 +48,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
         path="/recruiter/jobs/:jobId"
         element={
@@ -153,6 +156,9 @@ function App() {
           }
         />
 
+      // existing 
+      <Route path="/recruiter/settings" element={<RecruiterSettings />} />
+         <Route path="/settings" element={<CandidateSettings />} />
         {/* Shared route */}
         <Route
           path="/jobs/:jobId/apply"

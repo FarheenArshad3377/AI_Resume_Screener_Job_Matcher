@@ -27,9 +27,9 @@ export default function HeroSection() {
           advanced AI matching algorithms that see beyond the resume.
         </p>
 
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <RoleToggle role={role} onChange={setRole} />
-        </div>
+        </div> */}
 
         <div className="d-flex justify-content-center gap-3 flex-wrap">
           <button className="rp-btn-gradient" onClick={handleGetStarted}>

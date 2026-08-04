@@ -35,7 +35,53 @@ namespace ResumeScreener.Api.Controllers
             var result = await _jobService.GetJobsAsync("Open", 1, 100, GetRecruiterId());
             return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Active jobs fetched", Data = result.Data });
         }
+        [HttpGet("company-profile")]
+        public async Task<IActionResult> GetCompanyProfile()
+        {
+            var recruiterId = GetRecruiterId();
+            var recruiter = await _context.Users.FindAsync(recruiterId);
 
+            if (recruiter == null)
+                return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Recruiter not found" });
+
+            var dto = new CompanyProfileDto
+            {
+                Id = recruiter.Id,
+                FullName = recruiter.FullName,
+                Email = recruiter.Email,
+                CompanyName = recruiter.CompanyName,
+                Role = recruiter.Role
+            };
+
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Profile fetched", Data = dto });
+        }
+
+        [HttpPut("company-profile")]
+        public async Task<IActionResult> UpdateCompanyProfile([FromBody] UpdateCompanyProfileRequest request)
+        {
+            var recruiterId = GetRecruiterId();
+            var recruiter = await _context.Users.FindAsync(recruiterId);
+
+            if (recruiter == null)
+                return NotFound(new ApiResponse<object> { StatusCode = 404, Message = "Recruiter not found" });
+
+            recruiter.FullName = request.FullName;
+            recruiter.Email = request.Email;
+            recruiter.CompanyName = request.CompanyName;
+
+            await _context.SaveChangesAsync();
+
+            var dto = new CompanyProfileDto
+            {
+                Id = recruiter.Id,
+                FullName = recruiter.FullName,
+                Email = recruiter.Email,
+                CompanyName = recruiter.CompanyName,
+                Role = recruiter.Role
+            };
+
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Profile updated successfully", Data = dto });
+        }
         [HttpGet("team-members")]
         public async Task<IActionResult> GetTeamMembers()
         {

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchInterviews,
@@ -17,9 +18,90 @@ import ScheduleInterviewModal from '../components/ScheduleInterviewModal';
 import RecruiterRescheduleModal from '../components/RecruiterRescheduleModal';
 import RecruiterFeedbackModal from '../components/RecruiterFeedbackModal';
 
+/* Actions dropdown — rendered via Portal into document.body so it's
+   never clipped by table-responsive and never gets covered by
+   Previous/Next pagination buttons. */
+function ActionsMenu({ interview, anchorRect, onClose, dispatch }) {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) onClose();
+    };
+    const handleScrollOrResize = () => onClose();
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [onClose]);
+
+  if (!anchorRect) return null;
+
+  const menuWidth = 200;
+  let left = anchorRect.right - menuWidth;
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  const top = anchorRect.bottom + 6;
+
+  const handleCancel = () => {
+    if (!confirm(`Cancel interview with ${interview.candidateName}?`)) return;
+    dispatch(cancelInterview({ interviewId: interview.id }));
+    onClose();
+  };
+
+  return createPortal(
+    <ul
+      ref={menuRef}
+      className="rp-dropdown-list"
+      style={{
+        position: 'fixed',
+        top,
+        left,
+        width: menuWidth,
+        margin: 0,
+        listStyle: 'none',
+        zIndex: 9999
+      }}
+    >
+      <li>
+        <button className="rp-dropdown-item" onClick={onClose}>View Details</button>
+      </li>
+      <li>
+        <button className="rp-dropdown-item" onClick={() => { dispatch(openRescheduleModal(interview)); onClose(); }}>
+          Edit / Reschedule
+        </button>
+      </li>
+      {interview.status === 'Completed' && (
+        <li>
+          <button className="rp-dropdown-item" onClick={() => { dispatch(openFeedbackModal(interview)); onClose(); }}>
+            Add Feedback
+          </button>
+        </li>
+      )}
+      <li>
+        <button className="rp-dropdown-item" onClick={() => { dispatch(sendReminder(interview.id)); onClose(); }}>
+          Send Reminder
+        </button>
+      </li>
+      <li>
+        <button className="rp-dropdown-item" style={{ color: '#f87171' }} onClick={handleCancel}>
+          Cancel Interview
+        </button>
+      </li>
+    </ul>,
+    document.body
+  );
+}
+
 export default function RecruiterInterviewsPage() {
   const dispatch = useDispatch();
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [anchorRect, setAnchorRect] = useState(null);
 
   const {
     interviews, stats, loading, error, page, pageSize, totalCount,
@@ -37,10 +119,20 @@ export default function RecruiterInterviewsPage() {
     }));
   }, [dispatch, page, pageSize, filters]);
 
-  const handleCancel = (interview) => {
-    if (!confirm(`Cancel interview with ${interview.candidateName}?`)) return;
-    dispatch(cancelInterview({ interviewId: interview.id }));
+  const toggleMenu = (e, id) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      setAnchorRect(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setAnchorRect(rect);
+    setOpenMenuId(id);
+  };
+
+  const closeMenu = () => {
     setOpenMenuId(null);
+    setAnchorRect(null);
   };
 
   return (
@@ -71,13 +163,10 @@ export default function RecruiterInterviewsPage() {
               </div>
             )}
 
-            {/* Stat cards */}
             <div className="row g-3 mb-4">
               <div className="col-md-3">
                 <div className="rp-stat-card d-flex align-items-center gap-3">
-                  <div className="rp-stat-icon rp-stat-icon-purple">
-                    <i className="bi bi-calendar-check"></i>
-                  </div>
+                  <div className="rp-stat-icon rp-stat-icon-purple"><i className="bi bi-calendar-check"></i></div>
                   <div>
                     <small className="d-block text-uppercase rp-stat-label">Scheduled Today</small>
                     <h5 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{stats.scheduledToday}</h5>
@@ -86,9 +175,7 @@ export default function RecruiterInterviewsPage() {
               </div>
               <div className="col-md-3">
                 <div className="rp-stat-card d-flex align-items-center gap-3">
-                  <div className="rp-stat-icon rp-stat-icon-cyan">
-                    <i className="bi bi-calendar-week"></i>
-                  </div>
+                  <div className="rp-stat-icon rp-stat-icon-cyan"><i className="bi bi-calendar-week"></i></div>
                   <div>
                     <small className="d-block text-uppercase rp-stat-label">This Week</small>
                     <h5 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{stats.thisWeek}</h5>
@@ -97,9 +184,7 @@ export default function RecruiterInterviewsPage() {
               </div>
               <div className="col-md-3">
                 <div className="rp-stat-card d-flex align-items-center gap-3">
-                  <div className="rp-stat-icon rp-stat-icon-amber">
-                    <i className="bi bi-hourglass-split"></i>
-                  </div>
+                  <div className="rp-stat-icon rp-stat-icon-amber"><i className="bi bi-hourglass-split"></i></div>
                   <div>
                     <small className="d-block text-uppercase rp-stat-label">Pending Confirmation</small>
                     <h5 className="mb-0 fw-bold" style={{ color: 'var(--rp-text)' }}>{stats.pendingConfirmation}</h5>
@@ -119,7 +204,6 @@ export default function RecruiterInterviewsPage() {
               </div>
             </div>
 
-            {/* Filters */}
             <div className="rp-apply-card mb-3 py-3">
               <div className="d-flex flex-wrap gap-2 align-items-center">
                 <div className="input-group" style={{ maxWidth: '220px' }}>
@@ -178,7 +262,6 @@ export default function RecruiterInterviewsPage() {
               </div>
             </div>
 
-            {/* Table */}
             <div className="rp-apply-card">
               {loading ? (
                 <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--rp-accent-1)' }} /></div>
@@ -193,9 +276,9 @@ export default function RecruiterInterviewsPage() {
                         <th>Job Title / Role</th>
                         <th>Interview Type</th>
                         <th>Date & Time</th>
-                        <th>Interviewer(s)</th>
+                        <th></th>
                         <th>Status</th>
-                        <th className="text-end">Actions</th>
+                        <th style={{ width: '1px' }}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -216,9 +299,7 @@ export default function RecruiterInterviewsPage() {
                             </div>
                           </td>
                           <td className="small" style={{ color: 'var(--rp-text)' }}>{iv.jobTitle}</td>
-                          <td>
-                            <span className="badge rounded-pill rp-badge-muted">{iv.interviewType}</span>
-                          </td>
+                          <td><span className="badge rounded-pill rp-badge-muted">{iv.interviewType}</span></td>
                           <td className="small" style={{ color: 'var(--rp-text-muted)' }}>
                             {new Date(iv.scheduledDate).toLocaleString('en-US', {
                               month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
@@ -239,63 +320,7 @@ export default function RecruiterInterviewsPage() {
                             </div>
                           </td>
                           <td><StatusBadge status={iv.status} /></td>
-                          <td className="text-end">
-                            <div className="dropdown">
-                              <button
-                                className="rp-btn-outline btn-sm"
-                                onClick={() => setOpenMenuId(openMenuId === iv.id ? null : iv.id)}
-                              >
-                                <i className="bi bi-three-dots-vertical"></i>
-                              </button>
-                              {openMenuId === iv.id && (
-                                <ul
-                                  className="dropdown-menu dropdown-menu-end show"
-                                  style={{ position: 'absolute', right: 0, background: 'var(--rp-surface)', border: '1px solid var(--rp-border)' }}
-                                >
-                                  <li>
-                                    <button className="dropdown-item" style={{ color: 'var(--rp-text)' }} onClick={() => setOpenMenuId(null)}>
-                                      View Details
-                                    </button>
-                                  </li>
-                                  <li>
-                                    <button
-                                      className="dropdown-item"
-                                      style={{ color: 'var(--rp-text)' }}
-                                      onClick={() => { dispatch(openRescheduleModal(iv)); setOpenMenuId(null); }}
-                                    >
-                                      Edit / Reschedule
-                                    </button>
-                                  </li>
-                                  {iv.status === 'Completed' && (
-                                    <li>
-                                      <button
-                                        className="dropdown-item"
-                                        style={{ color: 'var(--rp-text)' }}
-                                        onClick={() => { dispatch(openFeedbackModal(iv)); setOpenMenuId(null); }}
-                                      >
-                                        Add Feedback
-                                      </button>
-                                    </li>
-                                  )}
-                                  <li>
-                                    <button
-                                      className="dropdown-item"
-                                      style={{ color: 'var(--rp-text)' }}
-                                      onClick={() => { dispatch(sendReminder(iv.id)); setOpenMenuId(null); }}
-                                    >
-                                      Send Reminder
-                                    </button>
-                                  </li>
-                                  <li><hr className="dropdown-divider" style={{ borderColor: 'var(--rp-border)' }} /></li>
-                                  <li>
-                                    <button className="dropdown-item text-danger" onClick={() => handleCancel(iv)}>
-                                      Cancel Interview
-                                    </button>
-                                  </li>
-                                </ul>
-                              )}
-                            </div>
-                          </td>
+                          
                         </tr>
                       ))}
                     </tbody>

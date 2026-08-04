@@ -10,7 +10,6 @@ export default function CandidateNavbar({ toggleSidebar }) {
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const navLinks = [
-    { label: 'Dashboard', path: '/my-applications' },
     { label: 'Jobs', path: '/jobs' },
     { label: 'Applications', path: '/my-applications' },
     { label: 'Interviews', path: '/my-interviews' },
@@ -41,8 +40,10 @@ export default function CandidateNavbar({ toggleSidebar }) {
             ))}
           </ul>
           <div className="ms-3 d-flex align-items-center gap-2">
-            <button className="rp-icon-btn"><i className="bi bi-bell"></i></button>
-            <button className="rp-icon-btn"><i className="bi bi-gear"></i></button>
+            {/* <button className="rp-icon-btn"><i className="bi bi-bell"></i></button> */}
+           <button className="rp-icon-btn" onClick={() => navigate('/settings')}>
+            <i className="bi bi-gear"></i>
+          </button>
 
             <div className="dropdown">
               <button className="btn p-0 border-0 bg-transparent dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
