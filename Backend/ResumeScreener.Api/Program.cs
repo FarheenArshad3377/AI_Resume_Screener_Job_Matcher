@@ -85,7 +85,6 @@ builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IInterviewService, InterviewService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
-//builder.Services.AddScoped<ICandidateService, ICandidateService>();
 
 // Configure File Upload Limits
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
@@ -100,7 +99,9 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5173",
-                "https://ai-resume-screener-job-matcher-liart.vercel.app"
+                "https://localhost:5173",
+                "https://ai-resume-screener-job-matcher-liart.vercel.app",
+                "https://ai-resume-screener-job-matcher-9ckdjpqo4.vercel.app" // 👈 Added your active Vercel App Domain
               )
               .AllowAnyHeader()
               .AllowAnyMethod();
@@ -130,12 +131,13 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 var app = builder.Build();
+
 app.UseDeveloperExceptionPage(); // 👈 TEMPORARY — sirf debug ke liye, baad mein hata denge
 
 // Global error handling 
 app.UseMiddleware<ResumeScreener.Api.Middleware.GlobalExceptionMiddleware>();
+
 // Configure Middleware Pipeline
 app.UseSwagger();
 app.UseSwaggerUI(options =>
@@ -145,15 +147,16 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseCors("AllowReactFrontend");
-// 👇 YE ADD KARO — UploadedResumes folder ko static files ke tor pe serve karo
+
+// UploadedResumes folder ko static files ke tor pe serve karo
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
         Path.Combine(builder.Environment.ContentRootPath, "UploadedResumes")),
     RequestPath = "/UploadedResumes"
 });
-// app.UseHttpsRedirection(); // Disabled for dev
 
+// app.UseHttpsRedirection(); // Disabled for dev
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -162,7 +165,6 @@ app.MapControllers();
 app.Run();
 
 // ---- Polly Policies ----
-
 static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
 {
     return HttpPolicyExtensions
